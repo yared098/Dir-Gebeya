@@ -1,258 +1,24 @@
+import 'package:dirgebeya/Pages/SheetPages/WithdrawalForm.dart';
 import 'package:flutter/material.dart';
 
-class WalletPage extends StatefulWidget {
-  const WalletPage({super.key});
-
-  @override
-  State<WalletPage> createState() => _WalletPageState();
-}
-
-class _WalletPageState extends State<WalletPage> {
-  final walletBalance = 4500.75;
-  final withdrawStats = [
-    {'label': 'Withdraw', 'value': 'ETB 1200'},
-    {'label': 'Pending Withdraw', 'value': 'ETB 300'},
-    {'label': 'Commission Given', 'value': 'ETB 150'},
-    {'label': 'Delivery Charge Earned', 'value': 'ETB 400'},
-    {'label': 'Collected Cash', 'value': 'ETB 2000'},
-    {'label': 'Total Collected Tax', 'value': 'ETB 350'},
-  ];
-
-  final transactions = [
-    {
-      'txn': '#TXN001',
-      'amount': 500,
-      'status': 'Approved',
-      'datetime': '2025-07-04 11:23 AM'
-    },
-    {
-      'txn': '#TXN002',
-      'amount': 100,
-      'status': 'Denied',
-      'datetime': '2025-07-03 02:15 PM'
-    },
-    {
-      'txn': '#TXN003',
-      'amount': 350,
-      'status': 'Pending',
-      'datetime': '2025-07-02 06:45 PM'
-    },
-    {
-      'txn': '#TXN004',
-      'amount': 275,
-      'status': 'Approved',
-      'datetime': '2025-07-01 09:10 AM'
-    },
-  ];
-
-  // Form controllers and variables for bottom sheet
-  final _formKey = GlobalKey<FormState>();
-  String _selectedMethod = 'Telebirr';
-  final List<String> _methods = ['Telebirr', 'Bank', 'Other'];
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _cardNumberController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _cardNumberController.dispose();
-    _amountController.dispose();
-    super.dispose();
-  }
-
-  void _showWithdrawForm() {
+class WalletScreen extends StatelessWidget {
+  const WalletScreen({super.key});
+  
+  void _showWithdrawalSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
       ),
       builder: (context) {
+        // Wrap with Padding to handle view insets (like the keyboard)
         return Padding(
           padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16,
-              right: 16,
-              top: 16),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Withdraw Request",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Dropdown for method
-                  DropdownButtonFormField<String>(
-                    value: _selectedMethod,
-                    decoration: const InputDecoration(
-                      labelText: "Withdraw Method",
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _methods
-                        .map((method) => DropdownMenuItem(
-                              value: method,
-                              child: Text(method),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedMethod = val!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Name field
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: "Name",
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? "Enter your name" : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Card Number field
-                  TextFormField(
-                    controller: _cardNumberController,
-                    decoration: const InputDecoration(
-                      labelText: "Card Number",
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) => value == null || value.isEmpty
-                        ? "Enter card number"
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Amount field
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(
-                      labelText: "Amount",
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Enter amount";
-                      }
-                      final amount = double.tryParse(value);
-                      if (amount == null || amount <= 0) {
-                        return "Enter valid amount";
-                      }
-                      if (amount > walletBalance) {
-                        return "Amount exceeds wallet balance";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          Navigator.of(context).pop(); // Close bottom sheet
-                          _showSuccessDialog();
-                        }
-                      },
-                      child: const Text(
-                        "Withdraw",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog() {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "Success",
-      transitionDuration: const Duration(milliseconds: 400),
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.center,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: 280,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 60),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Withdraw Request Sent!",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Your withdrawal request has been successfully submitted.",
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    child: const Text("Close"),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return FadeTransition(
-          opacity: anim1,
-          child: ScaleTransition(scale: anim1, child: child),
+          child: const WithdrawalForm(),
         );
       },
     );
@@ -262,159 +28,353 @@ class _WalletPageState extends State<WalletPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "My Wallet",
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
+          onPressed: () {
+            Navigator.pop(context); // 🔁 Go back to previous screen
+          },
+        ),
+        title: const Text(
+          'Wallet',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// 🔵 Withdraw Balance Card
-            Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade700,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  width: double.infinity,
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Withdraw Balance",
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "ETB ${walletBalance.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: _showWithdrawForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.blue,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.send),
-                        label: const Text("Send Withdraw Request"),
-                      ),
-                    ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top card for withdrawable balance
+              _buildBalanceCard(context),
+              const SizedBox(height: 24),
+
+              // Grid of statistics cards
+              _buildStatsGrid(),
+              const SizedBox(height: 24),
+
+              // Transaction history section
+              _buildTransactionHistoryHeader(),
+              const SizedBox(height: 16),
+              _buildTransactionItem(
+                transactionId: '11',
+                amount: '500.00',
+                date: '12-Oct-2022 12:39 AM',
+                status: 'Denied',
+              ),
+              const SizedBox(height: 12),
+              _buildTransactionItem(
+                transactionId: '10',
+                amount: '600.00',
+                date: '11-Oct-2022 10:25 PM', // Added a sample date
+                // No status means it will not be displayed
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds the main blue card showing the withdrawable balance.
+  Widget _buildBalanceCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2563EB), // Main blue color
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Stack(
+        children: [
+          // Decorative wave-like shapes for a modern touch
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomRight: Radius.circular(20),
+              ),
+              child: Container(
+                width: 150,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: const Color(
+                    0xFF1D4ED8,
+                  ).withOpacity(0.8), // Darker blue
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(100),
                   ),
                 ),
-                const Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Icon(Icons.account_balance_wallet,
-                      color: Colors.white70, size: 28),
+              ),
+            ),
+          ),
+          // Main content of the balance card
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Withdrawable Balance',
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '\$10,023.50',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _showWithdrawalSheet(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF2563EB),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Send Withdraw Request',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 30),
+  /// Builds the 2-column grid of statistical data.
+  Widget _buildStatsGrid() {
+    // Data for the grid items
+    final stats = [
+      {
+        'colors': [const Color(0xFF34D399), const Color(0xFF059669)],
+        'amount': '\$600.00',
+        'label': 'Withdrawn',
+      },
+      {
+        'colors': [const Color(0xFFF97316), const Color(0xFFEA580C)],
+        'amount': '\$500.00',
+        'label': 'Pending Withdrawn',
+      },
+      {
+        'colors': [const Color(0xFFFBBF24), const Color(0xFFF59E0B)],
+        'amount': '\$6,394.47',
+        'label': 'Commission Given',
+      },
+      {
+        'colors': [const Color(0xFF60A5FA), const Color(0xFF2563EB)],
+        'amount': '\$822.00',
+        'label': 'Delivery Charge Earned',
+      },
+      {
+        'colors': [const Color(0xFF60A5FA), const Color(0xFF2563EB)],
+        'amount': '\$25,756.80',
+        'label': 'Collected Cash',
+      },
+      {
+        'colors': [const Color(0xFFFBBF24), const Color(0xFFF59E0B)],
+        'amount': '\$2,519.00',
+        'label': 'Total Collected Tax',
+      },
+    ];
 
-            /// 📊 Withdraw Stats Grid
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: withdrawStats.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 2.8,
-              ),
-              itemBuilder: (context, index) {
-                final item = withdrawStats[index];
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade100),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item['label']!,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 6),
-                      Text(
-                        item['value']!,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                );
-              },
+    return GridView.builder(
+      physics:
+          const NeverScrollableScrollPhysics(), // Disable scrolling for the grid
+      shrinkWrap: true,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.7, // Adjust ratio for better layout
+      ),
+      itemCount: stats.length,
+      itemBuilder: (context, index) {
+        final stat = stats[index];
+        return _buildStatCard(
+          colors: stat['colors'] as List<Color>,
+          amount: stat['amount'] as String,
+          label: stat['label'] as String,
+        );
+      },
+    );
+  }
+
+  /// Builds a single card for the statistics grid.
+  Widget _buildStatCard({
+    required List<Color> colors,
+    required String amount,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: colors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            amount,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 30),
-
-            /// 🧾 Transaction History
-            const Text(
-              "Transaction History",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  /// Builds the header for the transaction history list.
+  Widget _buildTransactionHistoryHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Transaction History',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        TextButton(
+          onPressed: () {},
+          child: const Text(
+            'View All →',
+            style: TextStyle(
+              color: Colors.orange,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
             ),
-            const SizedBox(height: 10),
+          ),
+        ),
+      ],
+    );
+  }
 
-            ...transactions.map((tx) {
-              Color statusColor;
-              switch (tx['status']) {
-                case 'Approved':
-                  statusColor = Colors.green;
-                  break;
-                case 'Denied':
-                  statusColor = Colors.red;
-                  break;
-                default:
-                  statusColor = Colors.orange;
-              }
+  /// Builds a card for a single transaction item.
+  Widget _buildTransactionItem({
+    required String transactionId,
+    required String amount,
+    required String date,
+    String? status,
+  }) {
+    Color statusColor = status == 'Denied' ? Colors.red : Colors.green;
+    IconData statusIcon = status == 'Denied'
+        ? Icons.cancel_outlined
+        : Icons.check_circle_outline;
 
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                child: ListTile(
-                  leading: const Icon(Icons.receipt_long, color: Colors.blue),
-                  title: Text(tx['txn'].toString()),
-                  subtitle: Text(tx['datetime'].toString()),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "ETB ${tx['amount']}",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        tx['status'].toString(),
-                        style: TextStyle(color: statusColor, fontSize: 12),
-                      ),
-                    ],
+    return Card(
+      elevation: 1,
+      color: Colors.white,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Transaction# $transactionId',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
                 ),
-              );
-            }).toList(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '\$$amount',
+                    style: const TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              date,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            // Conditionally display the status row if a status is provided
+            if (status != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(statusIcon, color: statusColor, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

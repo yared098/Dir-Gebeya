@@ -68,8 +68,10 @@ class ProfileProvider extends ChangeNotifier {
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $token',
       });
+      print("token_pr"+token);
 
       if (response.statusCode == 200) {
+        print("profile1"+response.body.toString());
         final data = jsonDecode(response.body);
         _userProfile = UserProfile.fromJson(data);
       } else {

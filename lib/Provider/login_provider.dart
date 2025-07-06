@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:dirgebeya/Model/userModel.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 
 import '../utils/token_storage.dart';
@@ -24,21 +26,29 @@ class LoginProvider extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse(ApiConfig.login),
-        body: {
-          'phone': phone,
-          'password': password,
-        },
-      );
-
+      Uri.parse(ApiConfig.login),
+      headers: {
+        'Content-Type': 'application/json', // 👈 Required for JSON body
+      },
+      body: jsonEncode({ // 👈 Send JSON data
+        'phone': phone,
+        'password': password,
+      }),
+    );
       final data = jsonDecode(response.body);
-
+     
       if (response.statusCode == 200 && data['success'] == true) {
-        _token = data['token'];
+        _token = data['token'] ?? _generateRandomToken();
         _user = UserModel.fromJson(data['user']);
 
         // Save token securely
         await TokenStorage.saveToken(_token!);
+
+        // ✅ Save phone & password to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_phone', phone);
+        await prefs.setString('saved_password', password);
+        await prefs.setBool('remember_me', true);
 
         _isLoading = false;
         notifyListeners();
@@ -48,22 +58,53 @@ class LoginProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      _error = 'An error occurred. Please try again.';
+       
+      _error = 'An error occurred. Please try again./N+${e}';
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  /// Generate a random fallback token
+  String _generateRandomToken() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random();
+    return List.generate(32, (index) => chars[rand.nextInt(chars.length)]).join();
+  }
+
+  Future<void> logoutnew() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  // Clear stored token from SharedPreferences
+  await prefs.remove('token');
+
+  // Reset in-memory token and user
+  _token = null;
+  _user = null;
+
+  // Notify UI that auth state has changed
+  notifyListeners();
+}
+
+
   Future<void> logout() async {
     _token = null;
     _user = null;
+
+    // ✅ Clear SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('saved_phone');
+    await prefs.remove('saved_password');
+    await prefs.setBool('remember_me', false);
+    await prefs.remove('token');
+    await prefs.remove('user');
+
     await TokenStorage.clearToken();
     notifyListeners();
   }
 
   Future<void> loadTokenAndUser() async {
     _token = await TokenStorage.getToken();
-    // If needed: fetch user info again with token
     notifyListeners();
   }
 }

@@ -1,314 +1,328 @@
-import 'package:dirgebeya/Pages/order_detail_page.dart';
+import 'package:dirgebeya/Provider/order_provider.dart.dart';
+import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class OrderListPage extends StatefulWidget {
-  const OrderListPage({super.key});
+import 'order_detail_page.dart';
+
+class MyOrderScreen extends StatefulWidget {
+  const MyOrderScreen({super.key});
 
   @override
-  State<OrderListPage> createState() => _OrderListPageState();
+  State<MyOrderScreen> createState() => _MyOrderScreenState();
 }
 
-class _OrderListPageState extends State<OrderListPage> {
-  String selectedStatus = 'All';
+class _MyOrderScreenState extends State<MyOrderScreen> {
+  int _selectedFilterIndex = 0;
+  final List<String> _filters = ['All', 'Pending', 'Packaging', 'Delivered'];
 
-  final List<Map<String, dynamic>> mockOrders = [
-    {
-      'orderId': '#001',
-      'customer': 'John Doe',
-      'total': 150.0,
-      'status': 'Delivered',
-      'payment': 'Cash',
-      'date': '2025-07-05 09:15 AM',
-    },
-    {
-      'orderId': '#002',
-      'customer': 'Sara Smith',
-      'total': 80.0,
-      'status': 'Pending',
-      'payment': 'Cash on Delivery',
-      'date': '2025-07-04 11:30 AM',
-    },
-    {
-      'orderId': '#003',
-      'customer': 'Mike Johnson',
-      'total': 320.0,
-      'status': 'Packing',
-      'payment': 'CashOnBy Wallet',
-      'date': '2025-07-03 01:00 PM',
-    },
-    {
-      'orderId': '#004',
-      'customer': 'Linda Ray',
-      'total': 200.0,
-      'status': 'Rejected',
-      'payment': 'Cash on Delivery',
-      'date': '2025-07-02 03:45 PM',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Fetch orders once on screen load
+    Future.microtask(() {
+      Provider.of<OrderProvider>(context, listen: false).fetchOrders();
+    });
+  }
 
-  final List<String> statusFilters = [
-    'All',
-    'Pending',
-    'Packing',
-    'Delivered',
-    'Rejected',
-  ];
+  // Convert provider Order model to UI Order model
+  List<Order> _mapProviderOrdersToUI(List<Order> providerOrders) {
+    return providerOrders
+        .map(
+          (o) => Order(
+            tax: 2.0,
+            orderId: 1,
+            id: o.orderId?.toString() ?? '',
+            date: o.date ?? '',
+            amount: o.amount ?? 0,
+            status: o.status?.toUpperCase() ?? '',
+            paymentMode: o.paymentMode ?? '',
+          ),
+        )
+        .toList();
+  }
+
+  List<Order> _filteredOrders(List<Order> orders) {
+    final selected = _filters[_selectedFilterIndex].toUpperCase();
+    if (selected == 'ALL') return orders;
+    return orders.where((order) => order.status == selected).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> filteredOrders = selectedStatus == 'All'
-        ? mockOrders
-        : mockOrders
-              .where((order) => order['status'] == selectedStatus)
-              .toList();
-
     return Scaffold(
-      body: Column(
+      body: SafeArea(
+        child: Consumer<OrderProvider>(
+          builder: (context, orderProvider, child) {
+            if (orderProvider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (orderProvider.error != null) {
+              return Center(child: Text(orderProvider.error!));
+            }
+
+            final orders = _mapProviderOrdersToUI(orderProvider.orders);
+            final filteredOrders = _filteredOrders(orders);
+
+            return Column(
+              children: [
+                _buildAppBar(context),
+                _buildFilterChips(),
+                Expanded(
+                  child: filteredOrders.isEmpty
+                      ? const Center(child: Text("No orders found."))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: filteredOrders.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => OrderDetailsScreen(
+                                    orderId: filteredOrders[index].orderId,
+                                  ),
+                                ),
+                              ),
+                              child: OrderCard(order: filteredOrders[index]),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+  
+
+  Widget _buildAppBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
         children: [
-          /// 🔘 Filter Buttons
-          Card(
-            color: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), // rounded corners
-              side: BorderSide(
-                color: const Color.fromARGB(255, 253, 253, 253),
-                width: 1.5,
-              ), // blue border
-            ),
-            child: SizedBox(
-              height:
-                  40, // 10 px is very small for a header, so 50 px looks better
-              child: Center(
-                child: Text(
-                  "My Orders",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+          ClipPath(
+            // If you have a custom shape, keep this enabled:
+            // clipper: HexagonClipper(),
+            child: Container(
+              width: 40,
+              height: 45,
+
+              child: Padding(
+                padding: const EdgeInsets.all(6.0), // Adjust padding as needed
+                child: Image.asset(
+                  'assets/image/logo.png', // ✅ Your logo path
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
           ),
-
-          SizedBox(
-            height: 48,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: statusFilters.length,
-              itemBuilder: (context, index) {
-                final status = statusFilters[index];
-                final isSelected = status == selectedStatus;
-
-                // For "All" selected, use a stronger blue background
-                final chipSelectedColor = (status == 'All' && isSelected)
-                    ? const Color.fromARGB(255, 20, 70, 110) // strong blue for "All"
-                    : Colors.blue.shade100; // lighter blue for others
-
-                final chipLabelColor = isSelected
-                    ? Colors.white
-                    : Colors.black87;
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(status),
-                    selected: isSelected,
-                    onSelected: (_) => setState(() => selectedStatus = status),
-                    selectedColor: chipSelectedColor,
-                    labelStyle: TextStyle(
-                      color: chipLabelColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    backgroundColor: Colors.grey.shade200,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                );
-              },
+          const Expanded(
+            child: Text(
+              'My Order',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
             ),
           ),
-
-          const Divider(height: 1),
-
-          /// 🧾 Orders List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredOrders.length,
-              itemBuilder: (context, index) {
-                final order = filteredOrders[index];
-                return _buildOrderCard(context, order);
-              },
-            ),
-          ),
+          const SizedBox(width: 32),
         ],
       ),
     );
   }
 
-  Widget _buildOrderCard(BuildContext context, Map<String, dynamic> order) {
-    Color statusColor;
-    switch (order['status']) {
-      case 'Delivered':
-        statusColor = Colors.green;
-        break;
-      case 'Pending':
-        statusColor = Colors.orange;
-        break;
-      case 'Packing':
-        statusColor = Colors.blue;
-        break;
-      case 'Rejected':
-        statusColor = Colors.red;
-        break;
-      default:
-        statusColor = Colors.grey;
-    }
+  Widget _buildFilterChips() {
+    return SizedBox(
+      height: 50,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filters.length,
+        itemBuilder: (context, index) {
+          final isSelected = _selectedFilterIndex == index;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(_filters[index]),
+              selected: isSelected,
+              onSelected: (_) {
+                setState(() => _selectedFilterIndex = index);
+              },
+              labelStyle: TextStyle(
+  color: isSelected ? Colors.white : Theme.of(context).primaryColor,
+  fontWeight: FontWeight.w600,
+),
 
-    Color paymentColor;
-    switch (order['payment'].toString().toLowerCase()) {
-      case 'cash':
-        paymentColor = Colors.green.shade300;
-        break;
-      case 'cash on delivery':
-        paymentColor = Colors.orange.shade300;
-        break;
-      case 'cashonby wallet':
-        paymentColor = Colors.blue.shade300;
-        break;
-      default:
-        paymentColor = Colors.grey.shade300;
-    }
-
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)),
-        );
-      },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 3,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Order ID & Price
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    order['orderId'],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 21, 49, 99),
-
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      "ETB ${order['total']}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+              selectedColor: AppColors.primary,
+              backgroundColor: const Color(0xFFF3F4F6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
 
-              const SizedBox(height: 8),
+class OrderCard extends StatelessWidget {
+  final Order order;
+  const OrderCard({super.key, required this.order});
 
-              // Date Row only
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    order['date'],
-                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+  @override
+  Widget build(BuildContext context) {
+    final statusDetails = _getStatusDetails(order.status);
+    final paymentDetails = _getPaymentDetails(order.paymentMode);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order# ${order.orderId}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // New Row: Status and Payment side by side
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween, // Spread to edges
-                children: [
-                  // Status Tag (left)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      order['status'],
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: statusColor,
-                      ),
-                    ),
+                ),
+                Text(
+                  '\$${order.amount}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
-
-                  // Payment Tag (right)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(order.date, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      statusDetails['icon'],
+                      color: statusDetails['color'],
+                      size: 20,
                     ),
-                    decoration: BoxDecoration(
-                      color: paymentColor.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 6),
+                    Text(
+                      statusDetails['text'],
+                      style: TextStyle(color: statusDetails['color']),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.payment,
-                          size: 16,
-                          color: Colors.black54,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          order['payment'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      paymentDetails['text'],
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      paymentDetails['icon'],
+                      color: paymentDetails['color'],
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Map<String, dynamic> _getStatusDetails(String status) {
+    switch (status.toUpperCase()) {
+      case "DELIVERED":
+        return {
+          'text': 'Delivered',
+          'icon': Icons.check_circle,
+          'color': Colors.green,
+        };
+      case "PENDING":
+        return {
+          'text': 'Pending',
+          'icon': Icons.pending_actions,
+          'color': Colors.orange,
+        };
+      case "PACKAGING":
+        return {
+          'text': 'Packaging',
+          'icon': Icons.all_inbox,
+          'color': Colors.teal,
+        };
+      case "ACCEPTED":
+        return {
+          'text': 'Accepted',
+          'icon': Icons.local_shipping,
+          'color': Colors.blue,
+        };
+      case "CANCELLED":
+        return {'text': 'Cancelled', 'icon': Icons.cancel, 'color': Colors.red};
+      default:
+        return {
+          'text': 'Unknown',
+          'icon': Icons.help_outline,
+          'color': Colors.grey,
+        };
+    }
+  }
+
+  Map<String, dynamic> _getPaymentDetails(String method) {
+    switch (method.toLowerCase()) {
+      case "cash":
+        return {
+          'text': 'Cash On Delivery',
+          'icon': Icons.money,
+          'color': Colors.green,
+        };
+      case "wallet":
+        return {
+          'text': 'Wallet',
+          'icon': Icons.account_balance_wallet,
+          'color': Colors.blue,
+        };
+      default:
+        return {'text': 'Other', 'icon': Icons.payment, 'color': Colors.grey};
+    }
+  }
+}
+
+class HexagonClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width * 0.5, 0);
+    path.lineTo(size.width, size.height * 0.25);
+    path.lineTo(size.width, size.height * 0.75);
+    path.lineTo(size.width * 0.5, size.height);
+    path.lineTo(0, size.height * 0.75);
+    path.lineTo(0, size.height * 0.25);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
