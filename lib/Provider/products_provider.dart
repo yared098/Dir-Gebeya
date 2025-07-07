@@ -1,51 +1,10 @@
 import 'dart:convert';
+import 'package:dirgebeya/Model/Product.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
-class Product {
-  final int? productId;
-  final String name;
-  final double price;
-  final String imageUrl;
-  final String? type;
-  final bool hasLimitedStock;
 
-  Product({
-    this.productId,
-    required this.name,
-    required this.price,
-    required this.imageUrl,
-    this.type,
-    this.hasLimitedStock = false,
-  });
-
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      productId: json['product_id'] is int
-          ? json['product_id']
-          : int.tryParse(json['product_id'].toString()),
-      name: json['product_name'] ?? json['name'] ?? '',
-      price: (json['product_price'] ?? json['price'] as num).toDouble(),
-      imageUrl: json['product_featured_image'] ?? json['imageUrl'] ?? '',
-      type: json['type'],
-      hasLimitedStock: json['hasLimitedStock'] == true ||
-          json['hasLimitedStock'] == 'true' ||
-          json['hasLimitedStock'] == 1,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'product_id': productId,
-      'product_name': name,
-      'product_price': price,
-      'product_featured_image': imageUrl,
-      'type': type,
-      'hasLimitedStock': hasLimitedStock,
-    };
-  }
-}
 
 
 class ProductsProvider extends ChangeNotifier {
@@ -76,6 +35,7 @@ class ProductsProvider extends ChangeNotifier {
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $token',
       });
+      print("here_"+response.body.toString());
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -87,6 +47,7 @@ class ProductsProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = "Error: $e";
+      print("error_"+_error.toString());
     }
 
     _isLoading = false;

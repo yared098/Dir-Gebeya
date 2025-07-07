@@ -1,3 +1,4 @@
+import 'package:dirgebeya/Model/Product.dart';
 import 'package:dirgebeya/Provider/products_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

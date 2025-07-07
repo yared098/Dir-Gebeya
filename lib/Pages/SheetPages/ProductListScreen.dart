@@ -1,6 +1,8 @@
+import 'package:dirgebeya/Model/Product.dart';
 import 'package:dirgebeya/Pages/SheetPages/ProductDetailsScreen.dart';
 import 'package:dirgebeya/Provider/products_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -10,70 +12,56 @@ class ProductListScreen extends StatefulWidget {
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
-  final List<Product> _products = [
-    Product(
-      name: 'Norton Utilities Ultimate',
-      imageUrl: 'https://i.imgur.com/uG0e11K.png',
-      price: 40.00,
-      type: 'Digital',
-    ),
-    Product(
-      name: 'Office 2021 Professional Plus',
-      imageUrl: 'https://i.imgur.com/8smqG2Q.png',
-      price: 150.00,
-      type: 'Digital',
-    ),
-    Product(
-      name: '125 Childrens AudioBooks',
-      imageUrl:
-          'https://i.imgur.com/sI3Jm2z.png', // Using a different image for variety
-      price: 50.00,
-      type: 'Digital',
-    ),
-    Product(
-      name: 'Kill Code',
-      imageUrl:
-          'https://i.imgur.com/v1nysjB.png', // Using a different image for variety
-      price: 16.00,
-      type: 'Physical',
-      hasLimitedStock: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Fetch products once the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProductsProvider>(context, listen: false).fetchProducts();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<ProductsProvider>(context);
+    final products = provider.products; // <-- use products from provider here
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-         leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
-    onPressed: () {
-      Navigator.pop(context); // 🔁 Go back to previous screen
-    },
-  ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
+          onPressed: () {
+            Navigator.pop(context); // Go back to previous screen
+          },
+        ),
         title: const Text(
           'Product List',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: _products.length,
-              separatorBuilder: (context, index) =>
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-              itemBuilder: (context, index) {
-                return ProductListItem(product: _products[index]);
-              },
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : provider.error != null
+          ? Center(child: Text(provider.error!))
+          : Column(
+              children: [
+                _buildSearchBar(),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    itemCount: products.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, indent: 16, endIndent: 16),
+                    itemBuilder: (context, index) {
+                      return ProductListItem(product: products[index]);
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
         label: const Text('Add New'),
@@ -154,16 +142,18 @@ class ProductListItem extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>  ProductDetailsScreen(product: product,),
+                    builder: (context) =>
+                        ProductDetailsScreen(product: product),
                   ),
                 );
               }),
               _buildMenuIcon(Icons.qr_code_scanner, Colors.blue, () {}),
               _buildMenuIcon(Icons.edit_outlined, Colors.blue, () {
-                 Navigator.pushReplacement(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>  ProductDetailsScreen(product: product,),
+                    builder: (context) =>
+                        ProductDetailsScreen(product: product),
                   ),
                 );
               }),
@@ -205,11 +195,28 @@ class ProductListItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
-                child: Image.network(product.imageUrl, fit: BoxFit.contain),
+                child: (product.imageUrl != null && product.imageUrl.isNotEmpty)
+                    ? Image.network(
+                        product.imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder:
+                            (
+                              BuildContext context,
+                              Object error,
+                              StackTrace? stackTrace,
+                            ) {
+                              // Show a placeholder image if URL fails to load
+                              return Image.asset(
+                                'assets/image/logo.png',
+                                fit: BoxFit.contain,
+                              );
+                            },
+                      )
+                    : Image.asset('assets/image/logo.png', fit: BoxFit.contain),
               ),
               const SizedBox(height: 8),
               Text(
-                product.type.toString(),
+                product.type ?? '',
                 style: TextStyle(
                   color: Theme.of(context).primaryColor,
                   fontSize: 13,
@@ -223,7 +230,7 @@ class ProductListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (product.hasLimitedStock)
+                if (product.hasLimitedStock ?? false)
                   Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(
@@ -273,28 +280,27 @@ class ProductListItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (true)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD1FAE5),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'Approved',
-                      style: TextStyle(
-                        color: Color(0xFF065F46),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD1FAE5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Approved',
+                    style: TextStyle(
+                      color: Color(0xFF065F46),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  '\$${product.price.toStringAsFixed(2)}',
+                  '${product.price.toStringAsFixed(2)} ETB',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -306,7 +312,6 @@ class ProductListItem extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Right Side: Options Menu
-          // Builder is used to get a new context that contains the RenderBox for this specific button
           Builder(
             builder: (context) {
               return InkWell(
