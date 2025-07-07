@@ -39,7 +39,14 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => BankingProvider()),
-        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+      ChangeNotifierProvider(
+      create: (_) {
+        final provider = DashboardProvider();
+        provider.fetchOverview(); // this triggers API call
+        return provider;
+      },
+    ),
+
         ChangeNotifierProvider(create: (_) => DispatchProvider()),
         ChangeNotifierProvider(create: (_) => LoanProvider()),
         ChangeNotifierProvider(create: (_) => LoginProvider()),

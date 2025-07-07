@@ -11,15 +11,16 @@ class MyProfileScreen extends StatefulWidget {
 
 class _MyProfileScreenState extends State<MyProfileScreen> {
   bool _isDarkMode = true;
-  
-   @override
+
+  @override
   void initState() {
     super.initState();
     Future.microtask(() {
       Provider.of<ProfileProvider>(context, listen: false).fetchProfile();
     });
   }
- @override
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<ProfileProvider>(
       builder: (context, profileProvider, child) {
@@ -35,30 +36,37 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
             ),
             title: const Text(
               'My Profile',
-              style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             centerTitle: true,
           ),
           body: profileProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : user == null
-                  ? Center(child: Text(profileProvider.error ?? "Failed to load profile"))
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          _buildProfileHeader(user),
-                          const SizedBox(height: 24),
-                          _buildStatsGrid(user),
-                          const SizedBox(height: 24),
-                          _buildDarkModeToggle(),
-                          const SizedBox(height: 16),
-                          _buildSettingsList(),
-                          const SizedBox(height: 32),
-                          _buildAppVersion(),
-                        ],
-                      ),
-                    ),
+              ? Center(
+                  child: Text(
+                    profileProvider.error ?? "Failed to load profile",
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildProfileHeader(user),
+                      const SizedBox(height: 24),
+                      _buildStatsGrid(user),
+                      const SizedBox(height: 24),
+                      _buildDarkModeToggle(),
+                      const SizedBox(height: 16),
+                      _buildSettingsList(),
+                      const SizedBox(height: 32),
+                      _buildAppVersion(),
+                    ],
+                  ),
+                ),
         );
       },
     );
@@ -74,18 +82,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            right: -40,
-            top: -40,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E3A8A).withOpacity(0.8),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
+          Positioned(right: -30, top: -20, child: Text("")),
           Row(
             children: [
               CircleAvatar(
@@ -94,11 +91,24 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                 child: CircleAvatar(
                   radius: 28,
                   backgroundColor: const Color(0xFFE0E7FF),
-                  backgroundImage: user.avatar.isNotEmpty
-                      ? NetworkImage(user.avatar)
-                      : null,
-                  child: user.avatar.isEmpty
-                      ? Text(
+                  child: user.avatar.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            user.avatar,
+                            fit: BoxFit.cover,
+                            width: 56,
+                            height: 56,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Image.asset(
+                                'assets/image/logo.png', 
+                                fit: BoxFit.cover,
+                                width: 56,
+                                height: 56,
+                              );
+                            },
+                          ),
+                        )
+                      : Text(
                           user.firstName.isNotEmpty
                               ? user.firstName[0].toUpperCase()
                               : '',
@@ -107,10 +117,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1D4ED8),
                           ),
-                        )
-                      : null,
+                        ),
                 ),
               ),
+
               const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,17 +154,20 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _buildStatCard(
-            icon: Icons.inventory_2_outlined,
-            value: user.totalProducts.toString(),
-            label: 'Products'),
+          icon: Icons.inventory_2_outlined,
+          value: user.totalProducts.toString(),
+          label: 'Products',
+        ),
         _buildStatCard(
-            icon: Icons.list_alt_outlined,
-            value: user.totalOrders.toString(),
-            label: 'Orders'),
+          icon: Icons.list_alt_outlined,
+          value: user.totalOrders.toString(),
+          label: 'Orders',
+        ),
         _buildStatCard(
-            icon: Icons.monetization_on_outlined,
-            value: '\$ ${user.totalWalletBalance}',
-            label: 'Withdrawable\nBalance'),
+          icon: Icons.monetization_on_outlined,
+          value: '\$ ${user.totalWalletBalance}',
+          label: 'Withdrawable\nBalance',
+        ),
       ],
     );
   }
@@ -175,7 +188,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 5,
-          )
+          ),
         ],
       ),
       child: Column(
@@ -248,24 +261,50 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       child: Column(
         children: [
           _buildSettingsItem(
+            context: context,
             icon: Icons.settings_outlined,
             title: 'Settings',
             iconColor: Colors.grey.shade600,
-            onTap: () {},
+            routeName: '/settings', // only if exists in main.dart
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           _buildSettingsItem(
+            context: context,
             icon: Icons.account_balance_wallet_outlined,
             title: 'Bank Info',
             iconColor: const Color(0xFF3B82F6),
-            onTap: () {},
+            routeName: '/bank-info',
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           _buildSettingsItem(
+            context: context,
             icon: Icons.delete_outline_rounded,
             title: 'Delete Account',
             iconColor: Colors.red.shade400,
-            onTap: () {},
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Account'),
+                  content: const Text(
+                    'Are you sure you want to delete your account?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // your deletion logic
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -273,17 +312,44 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
   }
 
   Widget _buildSettingsItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required Color iconColor,
-    required VoidCallback onTap,
+    String? routeName,
+    VoidCallback? onTap,
   }) {
     return ListTile(
-      onTap: onTap,
+      onTap: () {
+        if (routeName != null) {
+          try {
+            Navigator.pushNamed(context, routeName).catchError((error) {
+              _showRouteError(context);
+            });
+          } catch (e) {
+            _showRouteError(context);
+          }
+        } else if (onTap != null) {
+          onTap();
+        }
+      },
       leading: Icon(icon, color: iconColor),
       title: Text(title, style: const TextStyle(fontSize: 16)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: Colors.grey,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+
+  void _showRouteError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("This feature is not available yet or route is missing."),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 

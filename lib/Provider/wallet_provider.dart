@@ -92,6 +92,7 @@ class WalletProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print("walet_provder"+data.toString());
         _summary = WalletSummary.fromJson(data);
       } else {
         _error = 'Failed to fetch wallet summary: ${response.statusCode}';
