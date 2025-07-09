@@ -23,7 +23,7 @@ class LoginProvider extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-
+     
     try {
       final response = await http.post(
       Uri.parse(ApiConfig.login),
@@ -31,14 +31,17 @@ class LoginProvider extends ChangeNotifier {
         'Content-Type': 'application/json', // 👈 Required for JSON body
       },
       body: jsonEncode({ // 👈 Send JSON data
-        'phone': phone,
+        'phone':convertToLocalPhone(phone),
         'password': password,
       }),
     );
       final data = jsonDecode(response.body);
+      print("response"+data.toString());
      
       if (response.statusCode == 200 && data['success'] == true) {
-        _token = data['token'] ?? _generateRandomToken();
+        
+
+        _token = data['token'];
         _user = UserModel.fromJson(data['user']);
 
         // Save token securely
@@ -64,6 +67,16 @@ class LoginProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  String convertToLocalPhone(String phoneNumber) {
+  if (phoneNumber.startsWith('+251')) {
+    return '0${phoneNumber.substring(4)}';
+  } else if (phoneNumber.startsWith('251')) {
+    return '0${phoneNumber.substring(3)}';
+  } else {
+    return phoneNumber; // return as-is if not international format
+  }
+}
 
   /// Generate a random fallback token
   String _generateRandomToken() {

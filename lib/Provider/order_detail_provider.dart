@@ -126,50 +126,61 @@ class OrderDetailProvider extends ChangeNotifier {
   List<OrderProduct> get products => _products;
   List<OrderHistory> get history => _history;
   List<OrderProof> get proofs => _proofs;
+Future<void> fetchOrderDetail(int orderId) async {
+  _isLoading = true;
+  _error = null;
+  notifyListeners();
 
-  Future<void> fetchOrderDetail(int orderId) async {
-    _isLoading = true;
-    _error = null;
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = "Unauthorized";
+    _isLoading = false;
     notifyListeners();
+    return;
+  }
 
-    final token = await TokenStorage.getToken();
-    if (token == null) {
-      _error = "Unauthorized";
-      _isLoading = false;
-      notifyListeners();
-      return;
-    }
+  final url = Uri.parse("${ApiConfig.orderDetail}/?order_id=$orderId");
+  print("dtial token"+token);
+  try {
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
 
-    final url = Uri.parse("${ApiConfig.orderDetail}/?order_id=$orderId");
-
-    try {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
-
-      if (response.statusCode == 200) {
+    if (response.statusCode == 200) {
+      try {
+        print("rsp: ${response.body}");
         final data = jsonDecode(response.body);
+
+        // Null-safe parsing
+        if (data['order'] == null) {
+          throw Exception("Order data is missing.");
+        }
+
         _order = OrderDetail.fromJson(data['order']);
 
-        _products = (data['products'] as List)
+        _products = (data['products'] as List? ?? [])
             .map((p) => OrderProduct.fromJson(p))
             .toList();
 
-        _history = (data['history'] as List)
+        _history = (data['history'] as List? ?? [])
             .map((h) => OrderHistory.fromJson(h))
             .toList();
 
-        _proofs = (data['proof'] as List)
+        _proofs = (data['proof'] as List? ?? [])
             .map((p) => OrderProof.fromJson(p))
             .toList();
-      } else {
-        _error = "Failed to load order details.";
+      } catch (e) {
+        _error = "Failed to parse response: $e";
       }
-    } catch (e) {
-      _error = "An error occurred: $e";
+    } else {
+      _error =
+          "Failed to load order details. Status Code: ${response.statusCode}";
     }
-
-    _isLoading = false;
-    notifyListeners();
+  } catch (e) {
+    _error = "Network error: $e";
   }
+
+  _isLoading = false;
+  notifyListeners();
+}
 }

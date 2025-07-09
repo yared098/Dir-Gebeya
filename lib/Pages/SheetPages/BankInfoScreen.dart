@@ -1,6 +1,6 @@
-import 'dart:ui';
-
+import 'package:dirgebeya/Provider/banking_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class BankInfoScreen extends StatefulWidget {
   const BankInfoScreen({super.key});
@@ -13,39 +13,61 @@ class _BankInfoScreenState extends State<BankInfoScreen> {
   bool _isBannerVisible = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch bank info once screen loads
+    Future.microtask(() {
+      Provider.of<BankingProvider>(context, listen: false).fetchBankInfo();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
-    onPressed: () {
-      Navigator.pop(context); // 🔁 Go back to previous screen
-    },
-  ),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           'Bank Info',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildInfoBanner(),
-            const SizedBox(height: 16),
-            _buildEditButton(),
-            const SizedBox(height: 16),
-            _buildBankInfoCard(),
-          ],
-        ),
+      body: Consumer<BankingProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.error != null) {
+            return Center(child: Text(provider.error!));
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildInfoBanner(),
+                const SizedBox(height: 16),
+                _buildEditButton(),
+                const SizedBox(height: 16),
+                _buildBankInfoCard(
+                  accountName: provider.accountName ?? 'N/A',
+                  bankName: provider.bankName ?? 'N/A',
+                  branch: provider.branch ?? 'N/A',
+                  accountNumber: provider.accountNumber ?? 'N/A',
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  // Builds the dismissible info banner at the top
   Widget _buildInfoBanner() {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
@@ -84,7 +106,6 @@ class _BankInfoScreenState extends State<BankInfoScreen> {
     );
   }
 
-  // Builds the "Edit Bank Info" button
   Widget _buildEditButton() {
     return Card(
       elevation: 1,
@@ -93,60 +114,61 @@ class _BankInfoScreenState extends State<BankInfoScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: () {
-          // Handle navigation to edit screen
+          // TODO: Navigate to edit bank info screen
         },
         title: Text(
           'Edit Bank Info',
           style: TextStyle(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.w500),
+              color: Theme.of(context).primaryColor, fontWeight: FontWeight.w500),
         ),
         trailing: Icon(Icons.edit_outlined, color: Theme.of(context).primaryColor),
       ),
     );
   }
 
-  // Builds the main card displaying the bank account details
-  Widget _buildBankInfoCard() {
+  Widget _buildBankInfoCard({
+    required String accountName,
+    required String bankName,
+    required String branch,
+    required String accountNumber,
+  }) {
     return Card(
       elevation: 1,
       color: Colors.white,
-clipBehavior: Clip.antiAlias, // Ensures the background image respects the card's border radius
+      clipBehavior: Clip.antiAlias,
       shadowColor: Colors.grey.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Stack(
         children: [
-          // Faint background credit card image
           Positioned(
             right: -20,
             bottom: -10,
             child: Opacity(
               opacity: 0.1,
               child: Image.network(
-                'https://i.imgur.com/2f2d4sV.png', // Transparent credit card PNG
+                'https://i.imgur.com/2f2d4sV.png',
                 width: 200,
                 color: Colors.blueGrey,
               ),
             ),
           ),
-          // Foreground content
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Icon(Icons.person, size: 28, color: Colors.black54),
-                    SizedBox(width: 16),
+                  children: [
+                    const Icon(Icons.person, size: 28, color: Colors.black54),
+                    const SizedBox(width: 16),
                     Text.rich(
                       TextSpan(
                         text: 'Holder Name : ',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                        style: const TextStyle(color: Colors.grey, fontSize: 16),
                         children: [
                           TextSpan(
-                            text: 'Fatema',
-                            style: TextStyle(
+                            text: accountName,
+                            style: const TextStyle(
                               color: Colors.black87,
                               fontWeight: FontWeight.bold,
                             ),
@@ -157,11 +179,11 @@ clipBehavior: Clip.antiAlias, // Ensures the background image respects the card'
                   ],
                 ),
                 const Divider(height: 32),
-                _buildDetailRow('Bank', 'City Bank'),
+                _buildDetailRow('Bank', bankName),
                 const SizedBox(height: 16),
-                _buildDetailRow('Branch', 'Mirpur- 12'),
+                _buildDetailRow('Branch', branch),
                 const SizedBox(height: 16),
-                _buildDetailRow('A/C No.', '12345678'),
+                _buildDetailRow('A/C No.', accountNumber),
               ],
             ),
           ),
@@ -170,7 +192,6 @@ clipBehavior: Clip.antiAlias, // Ensures the background image respects the card'
     );
   }
 
-  // Helper widget to create a row for a single bank detail
   Widget _buildDetailRow(String label, String value) {
     return Text.rich(
       TextSpan(

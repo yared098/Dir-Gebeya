@@ -1,3 +1,4 @@
+import 'package:dirgebeya/Pages/Products.dart';
 import 'package:dirgebeya/Provider/dashboard_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,79 +14,82 @@ class _DashboardScreenState extends State<HomePage> {
   int _selectedIndex = 0;
   String? _dropdownValue = 'OverAll';
 
-@override
-Widget build(BuildContext context) {
-  return Consumer<DashboardProvider>(
-    builder: (context, dashboardProvider, _) {
-      final overview = dashboardProvider.overviewData;
-      print("dashboard"+overview.toString());
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<DashboardProvider>(
+      builder: (context, dashboardProvider, _) {
+        final overview = dashboardProvider.overviewData;
+        
 
-      return Scaffold(
-        body: SafeArea(
-          child: dashboardProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : dashboardProvider.error != null
-                  ? Center(child: Text('Error: ${dashboardProvider.error}'))
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAppBar(context),
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildAnalyticsHeader(),
-                                const SizedBox(height: 20),
-                                _buildSectionTitle('Ongoing Orders'),
-                                const SizedBox(height: 16),
-                                _buildOngoingOrdersGrid(overview),
-                                const SizedBox(height: 24),
-                                _buildSectionTitle('Completed Orders'),
-                                const SizedBox(height: 8),
-                                _buildCompletedOrdersList(overview),
-                              ],
-                            ),
+        return Scaffold(
+          appBar:  _buildAppBar(context),
+          body: SafeArea(
+            
+            
+            child: dashboardProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : dashboardProvider.error != null
+                ? Center(child: Text('Error: ${dashboardProvider.error}'))
+                : SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                       
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAnalyticsHeader(),
+                              const SizedBox(height: 20),
+                              _buildSectionTitle('Ongoing Orders'),
+                              const SizedBox(height: 16),
+                              _buildOngoingOrdersGrid(overview),
+                              const SizedBox(height: 24),
+                              _buildSectionTitle('Completed Orders'),
+                              const SizedBox(height: 8),
+                              _buildCompletedOrdersList(overview),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                height: 500, // or MediaQuery height fraction
+                                child: StatisticsScreen(),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-        ),
-      );
-    },
-  );
-}
-
-
-  /// Builds the custom app bar.
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
+                  ),
+          ),
+        );
+      },
+    );
+  }
+PreferredSizeWidget _buildAppBar(BuildContext context) {
+  return PreferredSize(
+    preferredSize: const Size.fromHeight(60), // Set the height of your custom app bar
+    child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      color: Colors.white, // Optional: set a background color
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
               ClipPath(
-                // If you have a custom shape, keep this enabled:
-                // clipper: HexagonClipper(),
+                // You can define your custom clipper here if needed
                 child: Container(
                   width: 40,
                   height: 45,
-                  // color: Theme.of(context).primaryColor,
                   child: Padding(
-                    padding: const EdgeInsets.all(
-                      6.0,
-                    ), // Adjust padding as needed
+                    padding: const EdgeInsets.all(6.0),
                     child: Image.asset(
-                      'assets/image/logo.png', // ✅ Your logo path
+                      'assets/image/logo.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(width: 8),
               const Text(
                 'ባለመሪው ነጋዴ',
@@ -129,8 +133,10 @@ Widget build(BuildContext context) {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   /// Builds the "Business Analytics" header with the dropdown.
   Widget _buildAnalyticsHeader() {
@@ -203,41 +209,41 @@ Widget build(BuildContext context) {
 
   /// Builds the 2x2 grid for ongoing orders.
   Widget _buildOngoingOrdersGrid(Map<String, dynamic>? data) {
-  return GridView.count(
-    crossAxisCount: 2,
-    crossAxisSpacing: 16,
-    mainAxisSpacing: 16,
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    childAspectRatio: 1.5,
-    children: [
-      _buildOrderCard(
-        count: data?['total_orders'].toString() ?? '0',
-        label: 'Total Orders',
-        color: const Color(0xFF2E4E8A),
-        lightColor: const Color(0xFF4A6AB2),
-      ),
-      _buildOrderCard(
-        count: data?['pending_orders'].toString() ?? '0',
-        label: 'Pending Orders',
-        color: const Color(0xFF2E4E8A),
-        lightColor: const Color(0xFF4A6AB2),
-      ),
-      _buildOrderCard(
-        count: data?['completed_orders'].toString() ?? '0',
-        label: 'Completed Orders',
-        color: const Color(0xFF00A36C),
-        lightColor: const Color(0xFF28B47E),
-      ),
-      _buildOrderCard(
-        count: data?['refunded_orders'].toString() ?? '0',
-        label: 'Refund Delivery',
-        color: const Color(0xFFD9534F),
-        lightColor: const Color(0xFFE0635F),
-      ),
-    ],
-  );
-}
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.5,
+      children: [
+        _buildOrderCard(
+          count: data?['total_orders'].toString() ?? '0',
+          label: 'Total Orders',
+          color: const Color(0xFF2E4E8A),
+          lightColor: const Color(0xFF4A6AB2),
+        ),
+        _buildOrderCard(
+          count: data?['pending_orders'].toString() ?? '0',
+          label: 'Pending Orders',
+          color: const Color(0xFF2E4E8A),
+          lightColor: const Color(0xFF4A6AB2),
+        ),
+        _buildOrderCard(
+          count: data?['completed_orders'].toString() ?? '0',
+          label: 'Completed Orders',
+          color: const Color(0xFF00A36C),
+          lightColor: const Color(0xFF28B47E),
+        ),
+        _buildOrderCard(
+          count: data?['refunded_orders'].toString() ?? '0',
+          label: 'Refund Delivery',
+          color: const Color(0xFFD9534F),
+          lightColor: const Color(0xFFE0635F),
+        ),
+      ],
+    );
+  }
 
   /// Helper to build a single card in the ongoing orders grid.
   Widget _buildOrderCard({
@@ -295,52 +301,51 @@ Widget build(BuildContext context) {
 
   /// Builds the list of completed order statuses.
   Widget _buildCompletedOrdersList(Map<String, dynamic>? data) {
-  return Column(
-    children: [
-      _buildCompletedOrderItem(
-        iconData: Icons.do_not_disturb_on_total_silence,
-        iconColor: Colors.green,
-        label: 'Total ',
-        count: data?['total_orders'].toString() ?? '0',
-        countColor: Colors.green.withOpacity(0.1),
-        countTextColor: Colors.green.shade800,
-      ),
-       _buildCompletedOrderItem(
-        iconData: Icons.check_circle,
-        iconColor: Colors.green,
-        label: 'Delivered',
-        count: data?['completed_orders'].toString() ?? '0',
-        countColor: Colors.green.withOpacity(0.1),
-        countTextColor: Colors.green.shade800,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.cancel,
-        iconColor: Colors.red,
-        label: 'Cancelled',
-        count: data?['pending_orders'].toString() ?? '0',
-        countColor: Colors.red.withOpacity(0.1),
-        countTextColor: Colors.red.shade800,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.assignment_return,
-        iconColor: Colors.orange.shade700,
-        label: 'Return',
-        count: data?['refunded_orders'].toString() ?? '0',
-        countColor: Colors.grey.withOpacity(0.2),
-        countTextColor: Colors.black54,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.warning_amber_rounded,
-        iconColor: Colors.red.shade700,
-        label: 'Failed to Delivery',
-        count: data?['failed_orders'].toString() ?? '0',
-        countColor: Colors.red.withOpacity(0.1),
-        countTextColor: Colors.red.shade800,
-      ),
-    ],
-  );
-}
-
+    return Column(
+      children: [
+        _buildCompletedOrderItem(
+          iconData: Icons.do_not_disturb_on_total_silence,
+          iconColor: Colors.green,
+          label: 'Total ',
+          count: data?['total_orders'].toString() ?? '0',
+          countColor: Colors.green.withOpacity(0.1),
+          countTextColor: Colors.green.shade800,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.check_circle,
+          iconColor: Colors.green,
+          label: 'Delivered',
+          count: data?['completed_orders'].toString() ?? '0',
+          countColor: Colors.green.withOpacity(0.1),
+          countTextColor: Colors.green.shade800,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.cancel,
+          iconColor: Colors.red,
+          label: 'Cancelled',
+          count: data?['pending_orders'].toString() ?? '0',
+          countColor: Colors.red.withOpacity(0.1),
+          countTextColor: Colors.red.shade800,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.assignment_return,
+          iconColor: Colors.orange.shade700,
+          label: 'Return',
+          count: data?['refunded_orders'].toString() ?? '0',
+          countColor: Colors.grey.withOpacity(0.2),
+          countTextColor: Colors.black54,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.warning_amber_rounded,
+          iconColor: Colors.red.shade700,
+          label: 'Failed to Delivery',
+          count: data?['failed_orders'].toString() ?? '0',
+          countColor: Colors.red.withOpacity(0.1),
+          countTextColor: Colors.red.shade800,
+        ),
+      ],
+    );
+  }
 
   /// Helper to build a single item in the completed orders list.
   Widget _buildCompletedOrderItem({

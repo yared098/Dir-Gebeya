@@ -8,7 +8,7 @@ class WithdrawalForm extends StatefulWidget {
 }
 
 class _WithdrawalFormState extends State<WithdrawalForm> {
-  String? _selectedCard = 'VISA Card';
+  String? _selectedCard = 'Visionfund';
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
               value: _selectedCard,
               icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
               decoration: const InputDecoration(),
-              items: ['VISA Card', 'MasterCard', 'Bank Transfer']
+              items: ['Visionfund', ' Bibret Bank',""]
                   .map((label) => DropdownMenuItem(
                         value: label,
 child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -45,7 +45,7 @@ child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
             // Text field for name
             const TextField(
               decoration: InputDecoration(
-                hintText: 'Jhon Doe',
+                hintText: 'Yohanes',
               ),
             ),
             const SizedBox(height: 16),
@@ -74,13 +74,13 @@ child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
                 style: const TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Inter'),
                 children: [
                   TextSpan(
-                    text: '\$ ',
+                    text: ' ',
                     style: TextStyle(
                       color: theme.primaryColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const TextSpan(text: 'Ex: 500'),
+                  const TextSpan(text: 'Ex: 500 ETB'),
                 ],
               ),
             ),

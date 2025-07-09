@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dirgebeya/Pages/DashboardHome.dart';
 import 'package:dirgebeya/Pages/LoginPage.dart';
+import 'package:dirgebeya/utils/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
@@ -31,7 +32,8 @@ class _SplashScreenState extends State<SplashScreen> {
         Future.delayed(const Duration(seconds: 3), () async {
           // Check token and navigate accordingly
           final prefs = await SharedPreferences.getInstance();
-          final token = prefs.getString('token'); // or your actual token key
+          // final token = prefs.getString('token'); // or your actual token key
+           final token = await TokenStorage.getToken(); // ✅ FIXED
 
           if (token != null && token.isNotEmpty) {
             // Token exists, go to Dashboard

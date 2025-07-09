@@ -18,10 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _isPasswordVisible = false;
 
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController(
-  
-  ); // Using a dummy text
+  final _phoneControler = TextEditingController();
+  final _passwordController = TextEditingController(); // Using a dummy text
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
@@ -32,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (remember) {
       setState(() {
         _rememberMe = true;
-        _emailController.text = savedPhone ?? '';
+        _phoneControler.text = savedPhone ?? '';
         _passwordController.text = savedPassword ?? '';
       });
     }
@@ -47,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneControler.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -127,119 +125,151 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /// Builds the entire login form section
+  final _formKey =
+      GlobalKey<FormState>(); // Add this at the top of your State class
+
   Widget _buildLoginForm(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Log In',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xa61e49),
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Manage your business from app',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-        const SizedBox(height: 24),
-        // Email Text Field
-        TextFormField(
-          controller: _emailController,
-          keyboardType: TextInputType.phone,
-          decoration: _inputDecoration(prefixIcon: Icons.phone_android),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        ),
-        const SizedBox(height: 16),
-        // Password Text Field
-        TextFormField(
-          controller: _passwordController,
-          obscureText: !_isPasswordVisible,
-          decoration: _inputDecoration(
-            prefixIcon: Icons.lock_outline,
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: Colors.grey[600],
-              ),
-              onPressed: () {
-                setState(() {
-                  _isPasswordVisible = !_isPasswordVisible;
-                });
-              },
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Log In',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color(0xa61e49),
             ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your business from app',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
 
-        // Remember Me & Forgot Password Row
-        const SizedBox(height: 24),
-        // Log In Button
-        Consumer<LoginProvider>(
-          builder: (context, loginProvider, child) {
-            return SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: loginProvider.isLoading
-                    ? null
-                    : () async {
-                        await loginProvider.login(
-                          _emailController.text.trim(),
-                          _passwordController.text.trim(),
-                        );
+          // ✅ Phone Number Field with +251 and validation
+          TextFormField(
+            controller: _phoneControler,
+            keyboardType: TextInputType.phone,
+            maxLength: 9,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: _inputDecoration(prefixIcon: Icons.phone).copyWith(
+              hintText: '9XXXXXXXX',
+              prefixText: '+251 ',
+              counterText: '',
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter your phone number';
+              } else if (value.length != 9) {
+                return 'Phone number must be exactly 9 digits';
+              }
+              return null;
+            },
+          ),
 
-                        if (loginProvider.token != null) {
-                          if (!mounted) return;
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => const DashboardScreen(),
-                            ),
-                          );
-                        } else {
-                          Provider.of<LoginProvider>(context,listen :false).logout();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                loginProvider.error ?? "Login failed",
-                              ),
-                              backgroundColor: const Color.fromRGBO(
-                                76,
-                                175,
-                                80,
-                                1,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFA61E49),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  elevation: 4,
-                  shadowColor: const Color(0xFFA61E49).withOpacity(0.4),
+          const SizedBox(height: 16),
+
+          // ✅ Password Field with validation
+          TextFormField(
+            controller: _passwordController,
+            obscureText: !_isPasswordVisible,
+            decoration: _inputDecoration(
+              prefixIcon: Icons.lock_outline,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: Colors.grey[600],
                 ),
-                child: loginProvider.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Log In',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
               ),
-            );
-          },
-        ),
-      ],
+            ).copyWith(hintText: 'Enter your password'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              } else if (value.length < 4) {
+                return 'Password must be at least 4 characters';
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // ✅ Login Button with form validation
+          Consumer<LoginProvider>(
+            builder: (context, loginProvider, child) {
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: loginProvider.isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            // ✅ Proceed with login
+                            await loginProvider.login(
+                              '+251${_phoneControler.text.trim()}',
+                              _passwordController.text.trim(),
+                            );
+
+                            if (loginProvider.token != null) {
+                              if (!mounted) return;
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (_) => const DashboardScreen(),
+                                ),
+                              );
+                            } else {
+                              Provider.of<LoginProvider>(
+                                context,
+                                listen: false,
+                              ).logout();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    loginProvider.error ?? "Login failed",
+                                  ),
+                                  backgroundColor: AppColors.primary
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFA61E49),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 4,
+                    shadowColor: const Color(0xFFA61E49).withOpacity(0.4),
+                  ),
+                  child: loginProvider.isLoading
+                      ? const CircularProgressIndicator(
+                          color: AppColors.primary,
+                        )
+                      : const Text(
+                          'Log In',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -255,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
           color: Colors.grey.withOpacity(0.15),
           shape: BoxShape.circle,
         ),
-        child: Icon(prefixIcon, color:AppColors.primary),
+        child: Icon(prefixIcon, color: AppColors.primary),
       ),
       suffixIcon: suffixIcon,
       filled: true,
