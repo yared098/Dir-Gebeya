@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:dirgebeya/Provider/myshop_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MyShopScreen extends StatefulWidget {
   const MyShopScreen({super.key});
@@ -8,11 +10,17 @@ class MyShopScreen extends StatefulWidget {
   @override
   State<MyShopScreen> createState() => _MyShopScreenState();
 }
-
 class _MyShopScreenState extends State<MyShopScreen> {
   bool _isTempClosed = false;
   bool _isVacationMode = false;
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      Provider.of<MyShopProvider>(context, listen: false).fetchShopDetails();
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,7 +91,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
               left: 16,
               top: 10,
               child: Image.network(
-                'https://i.imgur.com/GzC0j2y.png', // Placeholder image
+                'https://media.istockphoto.com/id/539057991/photo/opening-soon.jpg?s=612x612&w=0&k=20&c=2DcXp_RdS_WXnLAKMyqaqsxbQjeQ3Im9QGMUu_NJMVo=', // Placeholder image
                 width: 120,
               ),
             ),
@@ -106,78 +114,100 @@ class _MyShopScreenState extends State<MyShopScreen> {
     );
   }
 
-  Widget _buildShopInfoCard() {
-    return Container(
-      width: MediaQuery.of(context).size.width - 32,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-spreadRadius: 2,
-            blurRadius: 10,
-          )
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 20,
-            top: -30,
-            child: CircleAvatar(
-              radius: 32,
-              backgroundColor: Colors.white,
+ Widget _buildShopInfoCard() {
+  return Consumer<MyShopProvider>(
+    builder: (context, provider, _) {
+      if (provider.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (provider.error != null) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(provider.error!,
+              style: const TextStyle(color: Colors.red)),
+        );
+      }
+
+      final shop = provider.shop;
+      if (shop == null) return const SizedBox();
+
+      return Container(
+        width: MediaQuery.of(context).size.width - 32,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 10,
+            )
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: 20,
+              top: -30,
               child: CircleAvatar(
-                radius: 30,
-                backgroundColor: const Color(0xFFE0E7FF),
-                child: Text(
-                  'B',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                radius: 32,
+                backgroundColor: Colors.white,
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: const Color(0xFFE0E7FF),
+                  backgroundImage: shop.storeProfilePhoto != null
+                      ? NetworkImage(shop.storeProfilePhoto!)
+                      : null,
+                  child: shop.storeProfilePhoto == null
+                      ? Text(
+                          shop.storeName[0].toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        )
+                      : null,
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Book Store',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child:
-                          const Icon(Icons.edit_outlined, color: Colors.white, size: 20),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildInfoRow(
-                    Icons.phone_outlined, '+101633333339'),
-                const SizedBox(height: 8),
-                _buildInfoRow(Icons.location_on_outlined,
-                    'House-09, Road-02, Section-15,\nBlock-D, Mirpur-13'),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(shop.storeName,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.edit_outlined,
+                            color: Colors.white, size: 20),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(Icons.phone_outlined, shop.storeContactNumber),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(Icons.location_on_outlined, shop.storeAddress),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
@@ -193,28 +223,35 @@ spreadRadius: 2,
     );
   }
 
-  Widget _buildStatsRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildStatCard(
-            value: '4.5',
-            label: 'Rattings',
-            icon: Icons.star,
-            iconColor: Colors.orange),
-        _buildStatCard(
-            value: '02',
-            label: 'Reviews',
-            icon: Icons.reviews_outlined,
-            iconColor: Colors.lightBlue),
-        _buildStatCard(
-            value: '20',
-            label: 'Products',
-            icon: Icons.inventory_2_outlined,
-            iconColor: Colors.amber),
-      ],
-    );
-  }
+ Widget _buildStatsRow() {
+  return Consumer<MyShopProvider>(
+    builder: (context, provider, _) {
+      final productCount =
+          provider.shop?.totalProducts.toString() ?? '--';
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildStatCard(
+              value: '4.5',
+              label: 'Rattings',
+              icon: Icons.star,
+              iconColor: Colors.orange),
+          _buildStatCard(
+              value: '02',
+              label: 'Reviews',
+              icon: Icons.reviews_outlined,
+              iconColor: Colors.lightBlue),
+          _buildStatCard(
+              value: productCount,
+              label: 'Products',
+              icon: Icons.inventory_2_outlined,
+              iconColor: Colors.amber),
+        ],
+      );
+    },
+  );
+}
 
   Widget _buildStatCard(
       {required String value,

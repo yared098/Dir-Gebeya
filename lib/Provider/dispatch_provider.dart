@@ -70,34 +70,70 @@ class DispatchProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    
 
     final url = Uri.parse(
       '${ApiConfig.baseUrl}/dispatcher?action=list&status=$status&date_from=$dateFrom&date_to=$dateTo',
     );
 
     try {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data is List) {
+
+        if (data is List && data.isNotEmpty) {
           _dispatches = data.map((e) => Dispatch.fromJson(e)).toList();
         } else {
-          _error = "Invalid response format";
+          // empty or invalid list → use mock
+          _dispatches = _getMockDispatches();
         }
       } else {
+        // non-200 → error + mock
         _error = "Failed to fetch dispatch list (${response.statusCode})";
+        _dispatches = _getMockDispatches();
       }
     } catch (e) {
+      // exception → error + mock
       _error = "Error: $e";
+      _dispatches = _getMockDispatches();
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
+  List<Dispatch> _getMockDispatches() {
+    return [
+      Dispatch(
+        id: 1,
+        orderId: 101,
+        customerId: 201,
+        driverId: 2040,
+        assignedTime: '2025-06-03 10:00:00',
+        acceptedTime: '2025-06-03 11:00:00',
+        pickupTime: '2025-06-03 12:00:00',
+        deliveredTime: '2025-06-03 13:00:00',
+        status: 'assigned',
+        remarks: 'Urgent delivery',
+      ),
+      Dispatch(
+        id: 2,
+        orderId: 102,
+        customerId: 202,
+        driverId: 2041,
+        assignedTime: '2025-06-04 09:00:00',
+        acceptedTime: '',
+        pickupTime: '',
+        deliveredTime: '',
+        status: 'pending',
+        remarks: 'Normal',
+      ),
+    ];
+  }
   Future<bool> acceptDispatch({required int orderId, required String acceptedTime}) async {
     final token = await TokenStorage.getToken();
     if (token == null) return false;
@@ -150,4 +186,7 @@ class DispatchProvider extends ChangeNotifier {
       return false;
     }
   }
+
+
+
 }

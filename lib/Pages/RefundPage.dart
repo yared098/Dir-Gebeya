@@ -2,8 +2,10 @@
 import 'dart:ui';
 
 import 'package:dirgebeya/Model/RefundStatus.dart';
+import 'package:dirgebeya/Provider/dispatch_provider.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 // import 'package:intl/intl.dart';
 
 class RefundScreen extends StatefulWidget {
@@ -18,41 +20,29 @@ class _RefundScreenState extends State<RefundScreen> {
   RefundStatus _selectedStatus = RefundStatus.Pending;
 
   // Dummy data for all refund statuses to demonstrate filtering
-  final List<RefundRequest> _allRefunds = [
-    // Pending
-    RefundRequest(
-      orderId: '100134',
-      productName: 'Leather Ladies Bag',
-      imageUrl: 'https://i.imgur.com/gKDC2tC.png',
-      price: 15.00,
-      reason: 'There are many variations of passages of Lorem...',
-      date: DateTime(2022, 10, 11, 23, 12),
-      status: RefundStatus.Pending,
-    ),
-    // Approved
-    RefundRequest(
-      orderId: '100125',
-      productName: 'Modern Wrist Watch',
-      imageUrl: 'https://i.imgur.com/sI3Jm2z.png',
-      price: 45.50,
-      reason: 'Approved for full refund due to defect.',
-      date: DateTime(2022, 10, 10, 14, 30),
-      status: RefundStatus.Approved,
-    ),
-    RefundRequest(
-      orderId: '100121',
-      productName: 'Bluetooth Speaker',
-      imageUrl: 'https://i.imgur.com/v1nysjB.png',
-      price: 89.99,
-      reason: 'Customer request approved.',
-      date: DateTime(2022, 10, 9, 11, 00),
-      status: RefundStatus.Approved,
-    ),
-  ];
+  List<Dispatch> get _allDispatches {
+    final provider = Provider.of<DispatchProvider>(context);
+    if (provider.error != null || provider.isLoading) return [];
+    return provider.dispatches;
+  }
 
   // Gets the filtered list based on the selected status
-  List<RefundRequest> get _filteredList {
-    return _allRefunds.where((r) => r.status == _selectedStatus).toList();
+  List<Dispatch> get _filteredList {
+    return _allDispatches.where((d) {
+      return d.status.toLowerCase() == _selectedStatus.name.toLowerCase();
+    }).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch dispatch data with initial date range
+    Future.microtask(() {
+      Provider.of<DispatchProvider>(
+        context,
+        listen: false,
+      ).fetchDispatches(dateFrom: '2025-06-03', dateTo: '2025-06-06');
+    });
   }
 
   @override
@@ -62,7 +52,7 @@ class _RefundScreenState extends State<RefundScreen> {
         // appBar: _buildAppBar(context),
         body: Column(
           children: [
-             _buildAppBar(context),
+            _buildAppBar(context),
             _buildFilterChips(),
             Expanded(
               // This widget handles the smooth transition between lists
@@ -83,16 +73,14 @@ class _RefundScreenState extends State<RefundScreen> {
                           final request = _filteredList[index];
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+                            children: [
                               Padding(
-                                padding:
-                                     EdgeInsets.only(bottom: 8.0, left: 4.0),
-                                // child: Text(
-                                //   DateFormat('dd-MMM-yyyy hh:mm a').format(request.date),
-                                //   style: const TextStyle(color: Colors.grey, fontSize: 14),
-                                // ),
+                                padding: EdgeInsets.only(
+                                  bottom: 8.0,
+                                  left: 4.0,
+                                ),
                               ),
-                              RefundCard(request: request),
+                              DispatchCard(dispatch: _filteredList[index]),
                               const SizedBox(height: 16),
                             ],
                           );
@@ -106,8 +94,7 @@ class _RefundScreenState extends State<RefundScreen> {
     );
   }
 
-
- Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
@@ -165,12 +152,16 @@ class _RefundScreenState extends State<RefundScreen> {
                 }
               },
               labelStyle: TextStyle(
-                color: _selectedStatus == status ? Colors.white : Colors.black54,
+                color: _selectedStatus == status
+                    ? Colors.white
+                    : Colors.black54,
                 fontWeight: FontWeight.w600,
               ),
               selectedColor: AppColors.primary,
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
           );
@@ -178,15 +169,17 @@ class _RefundScreenState extends State<RefundScreen> {
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
-      return Center(
-        key: ValueKey<RefundStatus>(_selectedStatus), // Ensure switcher recognizes change
-        child: Text(
-          'No ${_selectedStatus.name.toLowerCase()} requests found.',
-          style: const TextStyle(color: Colors.grey, fontSize: 16),
-        ),
-      );
+    return Center(
+      key: ValueKey<RefundStatus>(
+        _selectedStatus,
+      ), // Ensure switcher recognizes change
+      child: Text(
+        'No ${_selectedStatus.name.toLowerCase()} requests found.',
+        style: const TextStyle(color: Colors.grey, fontSize: 16),
+      ),
+    );
   }
 }
 
@@ -217,7 +210,7 @@ class RefundCard extends StatelessWidget {
               children: [
                 Container(
                   width: 60,
-height: 60,
+                  height: 60,
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
@@ -232,19 +225,26 @@ height: 60,
                     children: [
                       Text(
                         request.productName,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '\$${request.price.toStringAsFixed(2)}',
                         style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDBEAFE),
                           borderRadius: BorderRadius.circular(6),
@@ -252,8 +252,9 @@ height: 60,
                         child: Text(
                           request.status.name,
                           style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.w600),
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -278,8 +279,9 @@ height: 60,
                     TextSpan(
                       text: 'Reason: ',
                       style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold),
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     TextSpan(text: request.reason),
                   ],
@@ -310,4 +312,159 @@ class HexagonClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class DispatchCard extends StatefulWidget {
+  final Dispatch dispatch;
+  const DispatchCard({super.key, required this.dispatch});
+
+  @override
+  State<DispatchCard> createState() => _DispatchCardState();
+}
+
+class _DispatchCardState extends State<DispatchCard> {
+  late String _selectedStatus;
+  final TextEditingController _commentController = TextEditingController();
+  bool _showForm = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.dispatch.status;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dispatch = widget.dispatch;
+    final provider = Provider.of<DispatchProvider>(context, listen: false);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      elevation: 3,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- Header section ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order# ${dispatch.orderId}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _showForm = !_showForm;
+                    });
+                  },
+                  icon: Icon(_showForm ? Icons.expand_less : Icons.expand_more),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+            Text('Status: ${dispatch.status}', style: const TextStyle(color: Colors.black87)),
+            Text('Driver ID: ${dispatch.driverId}', style: const TextStyle(color: Colors.grey)),
+            Text('Assigned: ${dispatch.assignedTime}', style: const TextStyle(color: Colors.grey)),
+            if (dispatch.remarks.isNotEmpty)
+              Text('Remarks: ${dispatch.remarks}', style: const TextStyle(color: Colors.grey)),
+
+            const SizedBox(height: 10),
+
+            // --- Expandable form section ---
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: _selectedStatus,
+                      items: ['approved', 'rejected', 'pending']
+                          .map((status) => DropdownMenuItem(
+                                value: status,
+                                child: Text(status[0].toUpperCase() + status.substring(1)),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedStatus = value!;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        labelText: "Update Status",
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: _commentController,
+                      decoration: const InputDecoration(
+                        labelText: "Comment",
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final now = DateTime.now().toIso8601String();
+                          final success = await provider.updateDispatchStatus(
+                            orderId: dispatch.orderId,
+                            status: _selectedStatus,
+                            time: now,
+                            comment: _commentController.text.trim(),
+                          );
+
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Status updated successfully")),
+                            );
+                            provider.fetchDispatches(dateFrom: '2025-06-03', dateTo: '2025-06-06');
+                          }
+                        },
+                        icon: const Icon(Icons.save),
+                        label: const Text("Update"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              crossFadeState:
+                  _showForm ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 300),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

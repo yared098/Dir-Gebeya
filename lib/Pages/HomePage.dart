@@ -12,76 +12,114 @@ class HomePage extends StatefulWidget {
 
 class _DashboardScreenState extends State<HomePage> {
   int _selectedIndex = 0;
-  String? _dropdownValue = 'OverAll';
+  String _dropdownValue = 'OverAll';
+  String _earningsType = 'monthly'; // Default earnings type
+  final String sellerId = '2040'; // Set your seller ID here
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch initial data after the first frame to avoid build phase issues
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<DashboardProvider>(context, listen: false);
+      provider.fetchOverview();
+      provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
+    });
+  }
+
+  void _onDropdownChanged(String? newValue) {
+    if (newValue == null) return;
+
+    setState(() {
+      _dropdownValue = newValue;
+
+      // Update earnings type based on dropdown selection
+      switch (newValue) {
+        case 'OverAll':
+          _earningsType = 'monthly'; // Or set to 'overall' if supported
+          break;
+        case 'This Month':
+          _earningsType = 'monthly';
+          break;
+        case 'This Year':
+          _earningsType = 'year';
+          break;
+        default:
+          _earningsType = 'monthly';
+      }
+    });
+
+    // Fetch earnings data for new earnings type
+    final provider = Provider.of<DashboardProvider>(context, listen: false);
+    provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<DashboardProvider>(
       builder: (context, dashboardProvider, _) {
         final overview = dashboardProvider.overviewData;
-        
 
         return Scaffold(
-          appBar:  _buildAppBar(context),
+          appBar: _buildAppBar(context),
           body: SafeArea(
-            
-            
             child: dashboardProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : dashboardProvider.error != null
-                ? Center(child: Text('Error: ${dashboardProvider.error}'))
-                : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                       
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildAnalyticsHeader(),
-                              const SizedBox(height: 20),
-                              _buildSectionTitle('Ongoing Orders'),
-                              const SizedBox(height: 16),
-                              _buildOngoingOrdersGrid(overview),
-                              const SizedBox(height: 24),
-                              _buildSectionTitle('Completed Orders'),
-                              const SizedBox(height: 8),
-                              _buildCompletedOrdersList(overview),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 500, // or MediaQuery height fraction
-                                child: StatisticsScreen(),
+                    ? Center(child: Text('Error: ${dashboardProvider.error}'))
+                    : CustomScrollView(
+                        slivers: [
+                          SliverPadding(
+                            padding: const EdgeInsets.all(16.0),
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate(
+                                [
+                                   _buildAnalyticsHeader(),
+                                  _buildEarningsSummary(dashboardProvider.earningsData),
+                                  const SizedBox(height: 20),
+                                  _buildSectionTitle('Ongoing Orders'),
+                                  const SizedBox(height: 16),
+                                  _buildOngoingOrdersGrid(overview),
+                                  const SizedBox(height: 24),
+                                  _buildSectionTitle('Completed Orders'),
+                                  const SizedBox(height: 8),
+                                  _buildCompletedOrdersList(overview),
+                                  const SizedBox(height: 10),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+
+                          // StatisticsScreen as a fixed height sliver
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: 500,
+                              child: StatisticsScreen(),
+                            ),
+                          ),
+                        ],
+                      ),
           ),
         );
       },
     );
   }
-PreferredSizeWidget _buildAppBar(BuildContext context) {
-  return PreferredSize(
-    preferredSize: const Size.fromHeight(60), // Set the height of your custom app bar
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      color: Colors.white, // Optional: set a background color
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              ClipPath(
-                // You can define your custom clipper here if needed
-                child: Container(
-                  width: 40,
-                  height: 45,
-                  child: Padding(
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60), // Set the height of your custom app bar
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        color: Colors.white,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                ClipPath(
+                  child: Container(
+                    width: 40,
+                    height: 45,
                     padding: const EdgeInsets.all(6.0),
                     child: Image.asset(
                       'assets/image/logo.png',
@@ -89,54 +127,52 @@ PreferredSizeWidget _buildAppBar(BuildContext context) {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'ባለመሪው ነጋዴ',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFA61E49),
+                const SizedBox(width: 8),
+                const Text(
+                  'ባለመሪው ነጋዴ',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFA61E49),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Stack(
-            alignment: Alignment.topRight,
-            children: [
-              Icon(
-                Icons.notifications_none_outlined,
-                color: Theme.of(context).primaryColor,
-                size: 30,
-              ),
-              Container(
-                width: 18,
-                height: 18,
-                margin: const EdgeInsets.only(top: 2, right: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+              ],
+            ),
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Icon(
+                  Icons.notifications_none_outlined,
+                  color: Theme.of(context).primaryColor,
+                  size: 30,
                 ),
-                child: const Center(
-                  child: Text(
-                    '0',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                Container(
+                  width: 18,
+                  height: 18,
+                  margin: const EdgeInsets.only(top: 2, right: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '0',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   /// Builds the "Business Analytics" header with the dropdown.
   Widget _buildAnalyticsHeader() {
@@ -172,22 +208,17 @@ PreferredSizeWidget _buildAppBar(BuildContext context) {
                 Icons.keyboard_arrow_down,
                 color: Colors.black54,
               ),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _dropdownValue = newValue;
-                });
-              },
+              onChanged: _onDropdownChanged,
               items: <String>['OverAll', 'This Month', 'This Year']
                   .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(
-                        value,
-                        style: const TextStyle(color: Colors.black54),
-                      ),
-                    );
-                  })
-                  .toList(),
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value,
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -244,6 +275,30 @@ PreferredSizeWidget _buildAppBar(BuildContext context) {
       ],
     );
   }
+
+
+Widget _buildEarningsSummary(Map<String, dynamic>? earningsData) {
+  if (earningsData == null) {
+    return const SizedBox(); // or some placeholder while loading
+  }
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 12.0),
+    child: Row(
+      children: [
+        const Icon(Icons.attach_money, color: Colors.green),
+        const SizedBox(width: 8),
+        Text(
+          'Total Earnings: ${earningsData['total_earning'] ?? '0'}  ETB',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   /// Helper to build a single card in the ongoing orders grid.
   Widget _buildOrderCard({

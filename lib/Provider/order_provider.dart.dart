@@ -1,37 +1,11 @@
 import 'dart:convert';
+
+import 'package:dirgebeya/Model/Order.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
 
-class Order {
-  final int   orderId;
-  final String  paymentMode;
-  final double  amount;
-  final double  tax;
-  final String status;
-  final String  date;
-
-  Order({
-    required this.orderId,
-    required this.paymentMode,
-    required this.amount,
-   required  this.tax,
-    required this.status,
-    required this.date, required String id,
-  });
-
-  factory Order.fromJson(Map<String, dynamic> json) {
-    return Order(
-      orderId: json['order_id'],
-      paymentMode: json['payment_mode'],
-      amount: json['amount'].toDouble(),
-      tax: json['tax'].toDouble(),
-      status: json['status'],
-      date: json['date'], id: '',
-    );
-  }
-}
 
 class OrderProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -65,7 +39,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        print("rsp: ${response.body}"); // Correct way
+        print("rsporder: ${response.body}"); // Correct way
         if (jsonData['order'] != null) {
           _orders = (jsonData['order'] as List)
               .map((item) => Order.fromJson(item))

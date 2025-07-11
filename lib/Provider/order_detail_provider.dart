@@ -4,36 +4,114 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
 
-class OrderDetail {
+// =========================== MODELS ===========================
+
+class OrderDetailResponse {
+  final Order order;
+  final List<OrderProduct> products;
+  final List<OrderHistory> history;
+  final List<OrderProof> proof;
+
+  OrderDetailResponse({
+    required this.order,
+    required this.products,
+    required this.history,
+    required this.proof,
+  });
+
+  factory OrderDetailResponse.fromJson(Map<String, dynamic> json) {
+    return OrderDetailResponse(
+      order: Order.fromJson(json['order']),
+      products: (json['products'] as List)
+          .map((e) => OrderProduct.fromJson(e))
+          .toList(),
+      history: (json['history'] as List)
+          .map((e) => OrderHistory.fromJson(e))
+          .toList(),
+      proof:
+          (json['proof'] as List).map((e) => OrderProof.fromJson(e)).toList(),
+    );
+  }
+}
+
+class Order {
   final int id;
+  final int status;
+  final String txnId;
+  final int userId;
   final String address;
+  final int countryId;
+  final int stateId;
   final String city;
+  final String zipCode;
   final String phone;
   final String paymentMethod;
-  final double tax;
+  final double shippingCost;
+  final double taxCost;
   final double total;
+  final double couponDiscount;
+  final double totalCommission;
+  final double shippingCharge;
+  final String currencyCode;
+  final bool allowShipping;
+  final String ip;
+  final String countryCode;
+  final String files;
+  final String? comment;
   final String createdAt;
 
-  OrderDetail({
+  Order({
     required this.id,
+    required this.status,
+    required this.txnId,
+    required this.userId,
     required this.address,
+    required this.countryId,
+    required this.stateId,
     required this.city,
+    required this.zipCode,
     required this.phone,
     required this.paymentMethod,
-    required this.tax,
+    required this.shippingCost,
+    required this.taxCost,
     required this.total,
+    required this.couponDiscount,
+    required this.totalCommission,
+    required this.shippingCharge,
+    required this.currencyCode,
+    required this.allowShipping,
+    required this.ip,
+    required this.countryCode,
+    required this.files,
+    required this.comment,
     required this.createdAt,
   });
 
-  factory OrderDetail.fromJson(Map<String, dynamic> json) {
-    return OrderDetail(
+  factory Order.fromJson(Map<String, dynamic> json) {
+    return Order(
       id: json['id'],
+      status: json['status'],
+      txnId: json['txn_id'],
+      userId: json['user_id'],
       address: json['address'],
+      countryId: json['country_id'],
+      stateId: json['state_id'],
       city: json['city'],
+      zipCode: json['zip_code'],
       phone: json['phone'],
       paymentMethod: json['payment_method'],
-      tax: (json['tax_cost'] as num).toDouble(),
+      shippingCost: (json['shipping_cost'] as num).toDouble(),
+      taxCost: (json['tax_cost'] as num).toDouble(),
       total: (json['total'] as num).toDouble(),
+      couponDiscount: (json['coupon_discount'] as num).toDouble(),
+      totalCommission: (json['total_commition'] as num).toDouble(),
+      shippingCharge: (json['shipping_charge'] as num).toDouble(),
+      currencyCode: json['currency_code'],
+      allowShipping: json['allow_shipping'] == 1,
+      ip: json['ip'],
+      countryCode: json['country_code'],
+      files: json['files'],
+      comment: json['comment'] == "null" ? null : json['comment'],
       createdAt: json['created_at'],
     );
   }
@@ -41,50 +119,67 @@ class OrderDetail {
 
 class OrderProduct {
   final int productId;
-  final String name;
-  final String image;
-  final double price;
+  final String productName;
+  final String productImage;
+  final double productPrice;
   final int quantity;
   final double total;
-  final String storeName;
-  final String storeContact;
-  final String storeEmail;
+  final Vendor vendor;
 
   OrderProduct({
     required this.productId,
-    required this.name,
-    required this.image,
-    required this.price,
+    required this.productName,
+    required this.productImage,
+    required this.productPrice,
     required this.quantity,
     required this.total,
-    required this.storeName,
-    required this.storeContact,
-    required this.storeEmail,
+    required this.vendor,
   });
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
     return OrderProduct(
       productId: json['product_id'],
-      name: json['product_name'],
-      image: json['product_image'],
-      price: (json['product_price'] as num).toDouble(),
+      productName: json['product_name'],
+      productImage: json['product_image'],
+      productPrice: (json['product_price'] as num).toDouble(),
       quantity: json['quantity'],
       total: (json['total'] as num).toDouble(),
-      storeName: json['vendor']['store_name'],
-      storeContact: json['vendor']['store_contact'],
-      storeEmail: json['vendor']['store_email'],
+      vendor: Vendor.fromJson(json['vendor']),
+    );
+  }
+}
+
+class Vendor {
+  final int id;
+  final String storeName;
+  final String storeContact;
+  final String storeEmail;
+
+  Vendor({
+    required this.id,
+    required this.storeName,
+    required this.storeContact,
+    required this.storeEmail,
+  });
+
+  factory Vendor.fromJson(Map<String, dynamic> json) {
+    return Vendor(
+      id: json['id'],
+      storeName: json['store_name'],
+      storeContact: json['store_contact'],
+      storeEmail: json['store_email'],
     );
   }
 }
 
 class OrderHistory {
-  final String type;
+  final String historyType;
   final String paymentMode;
   final String comment;
   final String date;
 
   OrderHistory({
-    required this.type,
+    required this.historyType,
     required this.paymentMode,
     required this.comment,
     required this.date,
@@ -92,9 +187,9 @@ class OrderHistory {
 
   factory OrderHistory.fromJson(Map<String, dynamic> json) {
     return OrderHistory(
-      type: json['history_type'],
+      historyType: json['history_type'],
       paymentMode: json['payment_mode'],
-      comment: json['comment'] ?? '',
+      comment: json['comment'],
       date: json['date'],
     );
   }
@@ -110,11 +205,13 @@ class OrderProof {
   }
 }
 
+// =========================== PROVIDER ===========================
+
 class OrderDetailProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  OrderDetail? _order;
+  Order? _order;
   List<OrderProduct> _products = [];
   List<OrderHistory> _history = [];
   List<OrderProof> _proofs = [];
@@ -122,65 +219,50 @@ class OrderDetailProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  OrderDetail? get order => _order;
+  Order? get order => _order;
   List<OrderProduct> get products => _products;
   List<OrderHistory> get history => _history;
   List<OrderProof> get proofs => _proofs;
-Future<void> fetchOrderDetail(int orderId) async {
-  _isLoading = true;
-  _error = null;
-  notifyListeners();
 
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    _error = "Unauthorized";
+  Future<void> fetchOrderDetail(int orderId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = "Unauthorized";
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    final url = Uri.parse(
+        "https://direthiopia.com/api/v3/seller/order_detail_api?order_id=$orderId");
+   print("ord"+url.toString());
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final parsed = OrderDetailResponse.fromJson(data);
+
+        _order = parsed.order;
+        _products = parsed.products;
+        _history = parsed.history;
+        _proofs = parsed.proof;
+      } else {
+        _error =
+            "Failed to load order details. Status Code: ${response.statusCode}";
+      }
+    } catch (e) {
+      _error = "Network error: $e";
+    }
+
     _isLoading = false;
     notifyListeners();
-    return;
   }
-
-  final url = Uri.parse("${ApiConfig.orderDetail}/?order_id=$orderId");
-  print("dtial token"+token);
-  try {
-    final response = await http.get(url, headers: {
-      'Authorization': 'Bearer $token',
-    });
-
-    if (response.statusCode == 200) {
-      try {
-        print("rsp: ${response.body}");
-        final data = jsonDecode(response.body);
-
-        // Null-safe parsing
-        if (data['order'] == null) {
-          throw Exception("Order data is missing.");
-        }
-
-        _order = OrderDetail.fromJson(data['order']);
-
-        _products = (data['products'] as List? ?? [])
-            .map((p) => OrderProduct.fromJson(p))
-            .toList();
-
-        _history = (data['history'] as List? ?? [])
-            .map((h) => OrderHistory.fromJson(h))
-            .toList();
-
-        _proofs = (data['proof'] as List? ?? [])
-            .map((p) => OrderProof.fromJson(p))
-            .toList();
-      } catch (e) {
-        _error = "Failed to parse response: $e";
-      }
-    } else {
-      _error =
-          "Failed to load order details. Status Code: ${response.statusCode}";
-    }
-  } catch (e) {
-    _error = "Network error: $e";
-  }
-
-  _isLoading = false;
-  notifyListeners();
-}
 }

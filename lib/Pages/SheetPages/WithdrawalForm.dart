@@ -10,6 +10,18 @@ class WithdrawalForm extends StatefulWidget {
 class _WithdrawalFormState extends State<WithdrawalForm> {
   String? _selectedCard = 'Visionfund';
 
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _cardNumberController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -28,10 +40,10 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
               value: _selectedCard,
               icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
               decoration: const InputDecoration(),
-              items: ['Visionfund', ' Bibret Bank',""]
+              items: ['Visionfund', 'Hibret Bank']
                   .map((label) => DropdownMenuItem(
                         value: label,
-child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
                       ))
                   .toList(),
               onChanged: (value) {
@@ -43,23 +55,25 @@ child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
 
             // Text field for name
-            const TextField(
-              decoration: InputDecoration(
-                hintText: 'Yohanes',
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                hintText: 'Enter Name',
               ),
             ),
             const SizedBox(height: 16),
             
             // Text field for card number
-            const TextField(
+            TextField(
+              controller: _cardNumberController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: '1234 5678 9876',
+              decoration: const InputDecoration(
+                hintText: 'Card Number',
               ),
             ),
             const SizedBox(height: 32),
 
-            // Amount section
+            // Amount field
             const Text(
               'Enter Amount',
               style: TextStyle(
@@ -69,19 +83,11 @@ child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
             const SizedBox(height: 8),
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Inter'),
-                children: [
-                  TextSpan(
-                    text: ' ',
-                    style: TextStyle(
-                      color: theme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const TextSpan(text: 'Ex: 500 ETB'),
-                ],
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Ex: 500 ETB',
               ),
             ),
             const SizedBox(height: 24),
@@ -94,7 +100,10 @@ child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Example debug print
+                  debugPrint("Withdraw: Card=$_selectedCard, Name=${_nameController.text}, Card#=${_cardNumberController.text}, Amount=${_amountController.text}");
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.primaryColor,
                   foregroundColor: Colors.white,
@@ -104,7 +113,7 @@ child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
                 child: const Text(
-                  'Withdrawn',
+                  'Withdraw',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
