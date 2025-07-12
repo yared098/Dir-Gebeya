@@ -1,4 +1,5 @@
 import 'package:dirgebeya/Provider/profile_provider.dart';
+import 'package:dirgebeya/config/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -94,7 +95,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                   child: user.avatar.isNotEmpty
                       ? ClipOval(
                           child: Image.network(
-                            user.avatar,
+                            "https://direthiopia.com/assets/images/users/${user.avatar}",
                             fit: BoxFit.cover,
                             width: 56,
                             height: 56,

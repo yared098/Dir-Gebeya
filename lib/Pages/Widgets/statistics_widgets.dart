@@ -177,8 +177,8 @@ class TopProductsGrid extends StatelessWidget {
             ? fallbackImage
             : product['image']!;
         return ProductCard(
-          // image: imageUrl,
-          image: fallbackImage,
+          image: imageUrl,
+          // image: fallbackImage,
           title: product['title'] ?? 'No Title',
           soldCount: product['sold'] ?? '0',
         );

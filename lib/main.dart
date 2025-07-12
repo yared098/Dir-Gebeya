@@ -4,15 +4,18 @@ import 'package:dirgebeya/Pages/LoginPage.dart';
 import 'package:dirgebeya/Pages/RefundPage.dart';
 import 'package:dirgebeya/Pages/SheetPages/BankInfoScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/LoanPolicyScreen.dart';
+import 'package:dirgebeya/Pages/SheetPages/LoanScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/MessagesScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/MyshopScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/ProductListScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/ProfileScreen.dart';
+import 'package:dirgebeya/Pages/SheetPages/RequestPage.dart';
 import 'package:dirgebeya/Pages/SheetPages/SettingsPage.dart';
 import 'package:dirgebeya/Pages/SheetPages/TermsAndConditionsScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/TransactionScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/WalletPage.dart';
 import 'package:dirgebeya/Pages/SplashScreen.dart';
+import 'package:dirgebeya/Provider/RequestProvider.dart';
 
 import 'package:dirgebeya/Provider/auth_provider.dart';
 import 'package:dirgebeya/Provider/banking_provider.dart';
@@ -68,6 +71,8 @@ void main() {
         ChangeNotifierProvider(create: (_) => ProductsProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => WalletProvider()),
+        // reuest provider
+         ChangeNotifierProvider(create: (_) => RequestProvider()),
       ],
       child: const MyApp(),
     ),
@@ -95,13 +100,13 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/wallet': (context) => WalletScreen(),
         '/transaction': (context) => TransactionsScreen(),
-        '/loan': (context) => TransactionsScreen(),
+        '/loan': (context) => LoanScreen(),
         '/messages': (context) => MessagesScreen(),
         '/bank-info': (context) => BankInfoScreen(),
         '/terms': (context) => TermsAndConditionsScreen(),
         // '/about': (context) => const AboutUsPage(),
         '/loan-policy': (context) => LoanPolicyScreen(),
-        // '/logout': (context) => const LogoutPage(),
+        '/request': (context) =>  RequestPage(),
       },
     );
   }

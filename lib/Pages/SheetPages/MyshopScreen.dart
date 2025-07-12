@@ -10,6 +10,7 @@ class MyShopScreen extends StatefulWidget {
   @override
   State<MyShopScreen> createState() => _MyShopScreenState();
 }
+
 class _MyShopScreenState extends State<MyShopScreen> {
   bool _isTempClosed = false;
   bool _isVacationMode = false;
@@ -21,18 +22,19 @@ class _MyShopScreenState extends State<MyShopScreen> {
       Provider.of<MyShopProvider>(context, listen: false).fetchShopDetails();
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-         leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
-    onPressed: () {
-      Navigator.pop(context); // 🔁 Go back to previous screen
-    },
-  ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
+          onPressed: () {
+            Navigator.pop(context); // 🔁 Go back to previous screen
+          },
+        ),
         title: const Text(
           'My Shop',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
@@ -87,14 +89,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
         color: const Color(0xFFD1EEF7),
         child: Stack(
           children: [
-            Positioned(
-              left: 16,
-              top: 10,
-              child: Image.network(
-                'https://media.istockphoto.com/id/539057991/photo/opening-soon.jpg?s=612x612&w=0&k=20&c=2DcXp_RdS_WXnLAKMyqaqsxbQjeQ3Im9QGMUu_NJMVo=', // Placeholder image
-                width: 120,
-              ),
-            ),
+            
             Positioned(
               right: 16,
               top: 50,
@@ -114,100 +109,115 @@ class _MyShopScreenState extends State<MyShopScreen> {
     );
   }
 
- Widget _buildShopInfoCard() {
-  return Consumer<MyShopProvider>(
-    builder: (context, provider, _) {
-      if (provider.isLoading) {
-        return const Center(child: CircularProgressIndicator());
-      }
+  Widget _buildShopInfoCard() {
+    return Consumer<MyShopProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-      if (provider.error != null) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(provider.error!,
-              style: const TextStyle(color: Colors.red)),
-        );
-      }
+        if (provider.error != null) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              provider.error!,
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
 
-      final shop = provider.shop;
-      if (shop == null) return const SizedBox();
+        final shop = provider.shop;
+        if (shop == null) return const SizedBox();
 
-      return Container(
-        width: MediaQuery.of(context).size.width - 32,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 10,
-            )
-          ],
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 20,
-              top: -30,
-              child: CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.white,
+        return Container(
+          width: MediaQuery.of(context).size.width - 32,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: 20,
+                top: -30,
                 child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: const Color(0xFFE0E7FF),
-                  backgroundImage: shop.storeProfilePhoto != null
-                      ? NetworkImage(shop.storeProfilePhoto!)
-                      : null,
-                  child: shop.storeProfilePhoto == null
-                      ? Text(
-                          shop.storeName[0].toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        )
-                      : null,
+                  radius: 32,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: const Color(0xFFE0E7FF),
+                    backgroundImage: shop.storeProfilePhoto != null
+                        ? NetworkImage(shop.storeProfilePhoto!)
+                        : null,
+                    child: shop.storeProfilePhoto == null
+                        ? Text(
+                            shop.storeName[0].toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          )
+                        : null,
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(shop.storeName,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          shop.storeName,
                           style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          borderRadius: BorderRadius.circular(8),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        child: const Icon(Icons.edit_outlined,
-                            color: Colors.white, size: 20),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _buildInfoRow(Icons.phone_outlined, shop.storeContactNumber),
-                  const SizedBox(height: 8),
-                  _buildInfoRow(Icons.location_on_outlined, shop.storeAddress),
-                ],
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.edit_outlined,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      Icons.phone_outlined,
+                      shop.storeContactNumber,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      Icons.location_on_outlined,
+                      shop.storeAddress,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
@@ -216,48 +226,55 @@ class _MyShopScreenState extends State<MyShopScreen> {
         Icon(icon, color: Theme.of(context).primaryColor, size: 20),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(text,
-              style: const TextStyle(color: Colors.black54, fontSize: 14)),
+          child: Text(
+            text,
+            style: const TextStyle(color: Colors.black54, fontSize: 14),
+          ),
         ),
       ],
     );
   }
 
- Widget _buildStatsRow() {
-  return Consumer<MyShopProvider>(
-    builder: (context, provider, _) {
-      final productCount =
-          provider.shop?.totalProducts.toString() ?? '--';
+  Widget _buildStatsRow() {
+    return Consumer<MyShopProvider>(
+      builder: (context, provider, _) {
+        final productCount = provider.shop?.totalProducts.toString() ?? '--';
+        final _view=provider.shop!.view??0;
+        print("productscount"+productCount.toString());
 
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildStatCard(
-              value: '4.5',
-              label: 'Rattings',
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildStatCard(
+              value: "${_view}",
+              label: 'View',
               icon: Icons.star,
-              iconColor: Colors.orange),
-          _buildStatCard(
+              iconColor: Colors.orange,
+            ),
+            _buildStatCard(
               value: '02',
               label: 'Reviews',
               icon: Icons.reviews_outlined,
-              iconColor: Colors.lightBlue),
-          _buildStatCard(
+              iconColor: Colors.lightBlue,
+            ),
+            _buildStatCard(
               value: productCount,
               label: 'Products',
               icon: Icons.inventory_2_outlined,
-              iconColor: Colors.amber),
-        ],
-      );
-    },
-  );
-}
+              iconColor: Colors.amber,
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-  Widget _buildStatCard(
-      {required String value,
-      required String label,
-      required IconData icon,
-      required Color iconColor}) {
+  Widget _buildStatCard({
+    required String value,
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+  }) {
     return Container(
       width: (MediaQuery.of(context).size.width - 64) / 3,
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -271,15 +288,18 @@ class _MyShopScreenState extends State<MyShopScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(value,
-                  style: TextStyle(
-                      fontSize: 20,
-fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
               if (label == 'Rattings') ...[
                 const SizedBox(width: 4),
-                Icon(icon, color: iconColor, size: 20)
-              ]
+                Icon(icon, color: iconColor, size: 20),
+              ],
             ],
           ),
           const SizedBox(height: 4),
@@ -289,8 +309,7 @@ fontWeight: FontWeight.bold,
     );
   }
 
-  Widget _buildToggleCard(
-      String title, bool value, Function(bool) onChanged) {
+  Widget _buildToggleCard(String title, bool value, Function(bool) onChanged) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -301,11 +320,14 @@ fontWeight: FontWeight.bold,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title,
-              style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).primaryColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -332,11 +354,19 @@ class WaveClipper extends CustomClipper<Path> {
     var secondControlPoint = Offset(size.width * 3 / 4, size.height - 60);
     var secondEndPoint = Offset(size.width, size.height - 40);
 
-    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy,
-        firstEndPoint.dx, firstEndPoint.dy);
-    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy,
-        secondEndPoint.dx, secondEndPoint.dy);
-    
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
     path.lineTo(size.width, 0); // Line to top-right
     path.close();
     return path;

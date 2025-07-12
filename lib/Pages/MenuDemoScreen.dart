@@ -167,11 +167,19 @@ class AppMenuGrid extends StatelessWidget {
       'route': '/logout',
     },
     {
+      'icon': "assets/image/logout.png",
+      'label': 'Request',
+      // 'color': Color(0xff34495e),
+      'route': '/request',
+    },
+    {
       'icon': "assets/image/app-info.png",
       'label': 'v - 15.2',
       // 'color': Colors.blueGrey,
       'route': null, // No route
     },
+
+    // RequestPage
   ];
 
   @override

@@ -13,6 +13,7 @@ class MyShop {
   final int totalProducts;
   final String coverTextColor;
   final bool coverShowVendorName;
+  final int view;
 
   MyShop({
     required this.storeName,
@@ -23,6 +24,7 @@ class MyShop {
     required this.totalProducts,
     required this.coverTextColor,
     required this.coverShowVendorName,
+    required this .view
   });
 
   factory MyShop.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class MyShop {
       totalBalance: json['total_balance'],
       totalProducts: json['total_products'],
       coverTextColor: json['store_meta']['cover_text_color'] ?? '#000000',
+      view: json['view'],
       coverShowVendorName:
           (json['store_meta']['cover_show_vendor_name'] == 1),
     );
@@ -70,6 +73,7 @@ class MyShopProvider extends ChangeNotifier {
       });
 
       if (response.statusCode == 200) {
+        print("my_shop"+response.body);
         final data = jsonDecode(response.body);
         _shop = MyShop.fromJson(data);
       } else {

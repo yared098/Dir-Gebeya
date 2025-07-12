@@ -75,6 +75,7 @@ class LoanProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print("rsp_load"+response.body);
         if (data['status'] == 'success' && data['loans'] is List) {
           _loans = (data['loans'] as List)
               .map((loan) => Loan.fromJson(loan))

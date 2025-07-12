@@ -27,6 +27,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductsProvider>(context);
+    
     final isLoading = productProvider.isLoading;
     final error = productProvider.error;
     final products = productProvider.products;
@@ -40,6 +41,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       };
     }).toList();
 
+    print("products"+topProducts.toList().toString());
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -47,15 +50,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                EarningsHeader(
-                  dropdownValue: _dropdownValue,
-                  onChanged: (val) => setState(() => _dropdownValue = val),
-                ),
-                const SizedBox(height: 16),
-                const EarningsLegend(),
-                const SizedBox(height: 24),
-                const NoStatsCard(),
-                const SizedBox(height: 24),
                 const SectionTitle(
                   icon: Icons.star,
                   iconColor: Colors.amber,

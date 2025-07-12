@@ -4,7 +4,7 @@ class Product {
   final double price;
   final String imageUrl;
   final String? type;
-  final bool hasLimitedStock;
+  final bool? hasLimitedStock;
 
   Product({
     this.productId,

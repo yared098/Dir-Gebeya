@@ -4,14 +4,14 @@ import 'package:dirgebeya/Provider/loan_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key});
+class LoanScreen extends StatefulWidget {
+  const LoanScreen({super.key});
 
   @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
+  State<LoanScreen> createState() => _LoanScreenState();
 }
 
-class _TransactionsScreenState extends State<TransactionsScreen> {
+class _LoanScreenState extends State<LoanScreen> {
   int _selectedFilterIndex = 0;
   final List<String> _filters = ['All', 'Paid', 'Unpaid', 'Due'];
 
@@ -55,7 +55,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
-              'Transactions',
+              'Loans',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 20,

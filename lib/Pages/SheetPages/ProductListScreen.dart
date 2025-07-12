@@ -249,7 +249,7 @@ class _ProductListItemState extends State<ProductListItem> {
                     ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
                     : (_imageBytes != null
                         ? Image.memory(_imageBytes!, fit: BoxFit.cover)
-                        : Image.asset('assets/image/logo.png', fit: BoxFit.cover)),
+                        : Image.network(widget.product.imageUrl, fit: BoxFit.cover)),
               ),
               const SizedBox(height: 8),
               Text(
