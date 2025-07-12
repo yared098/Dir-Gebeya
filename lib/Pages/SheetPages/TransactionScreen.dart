@@ -1,7 +1,10 @@
 import 'dart:ui';
 
 import 'package:dirgebeya/Model/TransactionModel.dart';
+import 'package:dirgebeya/Provider/loan_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
 
@@ -13,51 +16,85 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   int _selectedFilterIndex = 0;
   final List<String> _filters = ['All', 'Pending', 'Approved', 'Denied'];
 
-  // Sample data for the list
-  final List<Transaction> _transactions = [
-    Transaction(id: '11', date: '12-Oct-2022 12:39 AM', amount: '500.00', status: TransactionStatus.Denied),
-    Transaction(id: '10', date: '11-Oct-2022 11:01 PM', amount: '600.00', status: TransactionStatus.Approved),
-    Transaction(id: '9', date: '11-Oct-2022 11:01 PM', amount: '500.00', status: TransactionStatus.Pending),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final loadProvider = Provider.of<LoanProvider>(context, listen: false);
+      loadProvider.fetchLoans();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
-    onPressed: () {
-      Navigator.pop(context); // 🔁 Go back to previous screen
-    },
-  ),
-        title: const Text(
-          'Transactions',
-          style: TextStyle(
-              color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          _buildFilterChips(),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: _transactions.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return TransactionCard(transaction: _transactions[index]);
+    return Consumer<LoanProvider>(
+      builder: (context, loadProvider, _) {
+        final isLoading = loadProvider.isLoading;
+        final error = loadProvider.error;
+        final allLoans = loadProvider.loans;
+
+        String selectedStatus = _filters[_selectedFilterIndex].toLowerCase();
+        final filteredLoans = selectedStatus == 'all'
+            ? allLoans
+            : allLoans.where((loan) => loan.status.toLowerCase() == selectedStatus).toList();
+
+        final transactions = _mapLoansToTransactions(filteredLoans);
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
+              onPressed: () {
+                Navigator.pop(context);
               },
             ),
+            title: const Text(
+              'Transactions',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: true,
           ),
-        ],
-      ),
+          body: Column(
+            children: [
+              _buildFilterChips(),
+              if (isLoading)
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (error != null)
+                Expanded(
+                  child: Center(child: Text('Error: $error')),
+                )
+              else if (transactions.isEmpty)
+                const Expanded(
+                  child: Center(child: Text('No transactions found')),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: transactions.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return TransactionCard(transaction: transactions[index]);
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  /// Builds the horizontal list of filter chips.
+  /// Filter chips UI
   Widget _buildFilterChips() {
     return Container(
       color: Colors.white,
@@ -87,13 +124,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   fontWeight: FontWeight.w600,
                 ),
                 selectedColor: Theme.of(context).primaryColor,
-backgroundColor: const Color(0xFFF3F4F6),
+                backgroundColor: const Color(0xFFF3F4F6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                   side: const BorderSide(color: Colors.transparent),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
             );
           },
@@ -101,9 +140,35 @@ backgroundColor: const Color(0xFFF3F4F6),
       ),
     );
   }
+
+  /// Convert Loan to Transaction
+  List<Transaction> _mapLoansToTransactions(List loans) {
+    return loans.map<Transaction>((loan) {
+      TransactionStatus status;
+      switch (loan.status.toLowerCase()) {
+        case 'approved':
+          status = TransactionStatus.Approved;
+          break;
+        case 'denied':
+          status = TransactionStatus.Denied;
+          break;
+        case 'pending':
+        default:
+          status = TransactionStatus.Pending;
+          break;
+      }
+
+      return Transaction(
+        id: loan.loanId.toString(),
+        date: loan.dueDate,
+        amount: loan.amount,
+        status: status,
+      );
+    }).toList();
+  }
 }
 
-// --- Reusable Transaction Card Widget ---
+// --- Transaction Card UI (unchanged) ---
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
 
@@ -133,8 +198,10 @@ class TransactionCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -163,7 +230,6 @@ class TransactionCard extends StatelessWidget {
     );
   }
 
-  /// Builds the status row with the correct icon and color.
   Widget _buildStatusWidget(TransactionStatus status) {
     Color color;
     IconData icon;

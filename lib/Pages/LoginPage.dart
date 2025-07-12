@@ -148,6 +148,8 @@ class _LoginScreenState extends State<LoginScreen> {
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 24),
+          // national id ,
+          //  finger print
 
           // ✅ Phone Number Field with +251 and validation
           TextFormField(
