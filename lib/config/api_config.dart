@@ -13,5 +13,6 @@ class ApiConfig {
   static const String wallet = '$baseUrl/wallet_api';
   static const String bank = '$baseUrl/add_payment';
   static const String logout = '$baseUrl/logout_api';
-  static const String baseImage='https://direthiopia.com/assests/images/users/';
+  static const String baseImage='https://direthiopia.com/assets/images/users/';
+  static const String productimage="https://direthiopia.com/assets/images/product/upload/thumb";
 }

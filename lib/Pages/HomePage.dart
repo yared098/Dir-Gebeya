@@ -1,4 +1,6 @@
 import 'package:dirgebeya/Pages/Products.dart';
+import 'package:dirgebeya/Pages/Widgets/TopProducts.dart';
+// import 'package:dirgebeya/Pages/Widgets/statistics_widgets.dart';
 import 'package:dirgebeya/Provider/dashboard_provider.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ class _DashboardScreenState extends State<HomePage> {
       final provider = Provider.of<DashboardProvider>(context, listen: false);
       provider.fetchOverview();
       provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
+      provider.fetchTopProducts(); // 👈 Fetch products here
     });
   }
 
@@ -67,39 +70,52 @@ class _DashboardScreenState extends State<HomePage> {
             child: dashboardProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : dashboardProvider.error != null
-                    ? Center(child: Text('Error: ${dashboardProvider.error}'))
-                    : CustomScrollView(
-                        slivers: [
-                          SliverPadding(
-                            padding: const EdgeInsets.all(8.0),
-                            sliver: SliverList(
-                              delegate: SliverChildListDelegate(
-                                [
-                                   _buildEarningsSection(dashboardProvider.earningsData),
-                                  // _buildEarningsSummary(dashboardProvider.earningsData),
-                                  const SizedBox(height: 20),
-                                  _buildSectionTitle('Ongoing Orders'),
-                                  const SizedBox(height: 16),
-                                  _buildOngoingOrdersGrid(overview),
-                                  const SizedBox(height: 24),
-                                  _buildSectionTitle('Completed Orders'),
-                                  const SizedBox(height: 8),
-                                  _buildCompletedOrdersList(overview),
-                                  const SizedBox(height: 10),
-                                ],
-                              ),
+                ? Center(child: Text('Error: ${dashboardProvider.error}'))
+                : CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.all(8.0),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildEarningsSection(
+                              dashboardProvider.earningsData,
                             ),
-                          ),
-
-                          // StatisticsScreen as a fixed height sliver
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: 500,
-                              child: StatisticsScreen(),
-                            ),
-                          ),
-                        ],
+                            // _buildEarningsSummary(dashboardProvider.earningsData),
+                            const SizedBox(height: 20),
+                            _buildSectionTitle('Ongoing Orders'),
+                            const SizedBox(height: 16),
+                            _buildOngoingOrdersGrid(overview),
+                            const SizedBox(height: 24),
+                            _buildSectionTitle('Completed Orders'),
+                            const SizedBox(height: 8),
+                            _buildCompletedOrdersList(overview),
+                            const SizedBox(height: 10),
+                          ]),
+                        ),
                       ),
+
+                      // StatisticsScreen as a fixed height sliver
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('My Products'),
+                              const SizedBox(height: 12),
+
+                              TopProductsGrid(
+                                topProducts: dashboardProvider.products,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         );
       },
@@ -108,7 +124,9 @@ class _DashboardScreenState extends State<HomePage> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(60), // Set the height of your custom app bar
+      preferredSize: const Size.fromHeight(
+        60,
+      ), // Set the height of your custom app bar
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         color: Colors.white,
@@ -176,57 +194,55 @@ class _DashboardScreenState extends State<HomePage> {
   }
 
   /// Builds the "Business Analytics" header with the dropdown.
- Widget _buildAnalyticsHeader() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      const Row(
-        children: [
-          // Icon(Icons.monetization_on, color: Colors.green, size: 28),
-          // SizedBox(width: 8),
-          Text(
-            'Business Analytics',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color.fromARGB(255, 252, 252, 252),
+  Widget _buildAnalyticsHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Row(
+          children: [
+            // Icon(Icons.monetization_on, color: Colors.green, size: 28),
+            // SizedBox(width: 8),
+            Text(
+              'Business Analytics',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color.fromARGB(255, 252, 252, 252),
+              ),
+            ),
+          ],
+        ),
+        Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.white),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _dropdownValue,
+              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+              onChanged: _onDropdownChanged,
+              items: <String>['OverAll', ' Month', ' Year']
+                  .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: const TextStyle(color: AppColors.white),
+                      ),
+                    );
+                  })
+                  .toList(),
             ),
           ),
-        ],
-      ),
-      Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.white)
         ),
-        child: DropdownButtonHideUnderline(
-          
-          child: DropdownButton<String>(
-            value: _dropdownValue,
-            icon: const Icon(
-              Icons.keyboard_arrow_down,
-              color: Colors.white,
-            ),
-            onChanged: _onDropdownChanged,
-            items: <String>['OverAll', ' Month', ' Year']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(
-                  value,
-                  style: const TextStyle(color: AppColors.white),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
+
   /// Builds the title for a section.
   Widget _buildSectionTitle(String title) {
     return Text(
@@ -276,111 +292,106 @@ class _DashboardScreenState extends State<HomePage> {
       ],
     );
   }
-  
 
-Widget _buildEarningsSection(Map<String, dynamic>? earningsData) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-    child: Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+  Widget _buildEarningsSection(Map<String, dynamic>? earningsData) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildAnalyticsHeader(),
+            const SizedBox(height: 20),
+            _buildEarningsSummary(earningsData),
+          ],
+        ),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildAnalyticsHeader(),
-          const SizedBox(height: 20),
-          _buildEarningsSummary(earningsData),
-        ],
-      ),
-    ),
-  );
-}
-Widget _buildEarningsSummary(Map<String, dynamic>? earningsData) {
-  if (earningsData == null) {
-    return const SizedBox(); // show nothing if null
+    );
   }
 
-  return Container(
-    width: double.infinity,
-    decoration: BoxDecoration(
-     
-      borderRadius: BorderRadius.circular(20),
-     
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: const Icon(
-            Icons.attach_money,
-            color: Colors.white,
-            size: 30,
-          ),
-        ),
-        const SizedBox(width: 18),
-        GestureDetector(
-          onTap: (){
-            Navigator.pushNamed(context, "/transaction");
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Total Earnings',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${earningsData['total_earning'] ?? '0'} ETB',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Spacer(),
-        GestureDetector(
-          onTap: (){
-            Navigator.pushNamed(context, "/transaction");
-          },
-          child: CircleAvatar(
+  Widget _buildEarningsSummary(Map<String, dynamic>? earningsData) {
+    if (earningsData == null) {
+      return const SizedBox(); // show nothing if null
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            padding: const EdgeInsets.all(16),
             child: const Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.primary,
-              size: 16,
+              Icons.attach_money,
+              color: Colors.white,
+              size: 30,
             ),
           ),
-        )
-      ],
-    ),
-  );
-}
+          const SizedBox(width: 18),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, "/transaction");
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Total Earnings',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${earningsData['total_earning'] ?? '0'} ETB',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, "/transaction");
+            },
+            child: CircleAvatar(
+              child: const Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.primary,
+                size: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-
-// Helper to build a single card in the ongoing orders grid.
+  // Helper to build a single card in the ongoing orders grid.
   Widget _buildOrderCard({
     required String count,
     required String label,

@@ -176,12 +176,12 @@ class TopProductsGrid extends StatelessWidget {
         final imageUrl = (product['image'] == null || product['image']!.isEmpty)
             ? fallbackImage
             : product['image']!;
-        return ProductCard(
-          image: imageUrl,
-          // image: fallbackImage,
-          title: product['title'] ?? 'No Title',
-          soldCount: product['sold'] ?? '0',
-        );
+        // return ProductCard(
+        //   image: imageUrl,
+        //   // image: fallbackImage,
+        //   title: product['title'] ?? 'No Title',
+        //   soldCount: product['sold'] ?? '0',
+        // );
       },
     );
   }
