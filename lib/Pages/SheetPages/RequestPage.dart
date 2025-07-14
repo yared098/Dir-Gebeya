@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dirgebeya/Provider/RequestProvider.dart';
-
 import 'package:dirgebeya/utils/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,30 +19,18 @@ class _RequestPageState extends State<RequestPage> {
   final TextEditingController _carLibNumberController = TextEditingController();
   File? _capturedImage;
 
-
   Future<void> _openCamera() async {
-  var status = await Permission.camera.status;
-  if (!status.isGranted) {
-    status = await Permission.camera.request();
+    var status = await Permission.camera.status;
     if (!status.isGranted) {
-      // Permission denied
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Camera permission is required.')),
-      );
-      return;
+      status = await Permission.camera.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Camera permission is required.')),
+        );
+        return;
+      }
     }
-  }
 
-  final picker = ImagePicker();
-  final pickedImage = await picker.pickImage(source: ImageSource.camera);
-  if (pickedImage != null) {
-    setState(() {
-      _capturedImage = File(pickedImage.path);
-    });
-  }
-}
-
-  Future<void> _openCamera1() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.camera);
     if (pickedImage != null) {
@@ -61,60 +47,113 @@ class _RequestPageState extends State<RequestPage> {
         nationalId: _nationalIdController.text,
         carLibNumber: _carLibNumberController.text,
         imageFile: _capturedImage,
-        fingerprintData: "sample_fingerprint_data", // Replace with actual scanner later
+        fingerprintData: "sample_fingerprint_data", // Replace with actual data
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = const Color(0xFF1455AC);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Request Page'),
+        title:  Text('Submit Request',style: TextStyle(color: Colors.white),),
         centerTitle: true,
+        backgroundColor: primaryColor,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
             children: [
+              // National ID
               TextFormField(
                 controller: _nationalIdController,
-                decoration: const InputDecoration(labelText: 'National ID'),
+                decoration: _inputDecoration("National ID"),
                 validator: (value) =>
                     value!.isEmpty ? 'National ID is required' : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+
+              // Car Lib Number
               TextFormField(
                 controller: _carLibNumberController,
-                decoration:
-                    const InputDecoration(labelText: 'Car Library Number'),
+                decoration: _inputDecoration("Car Library Number"),
                 validator: (value) =>
                     value!.isEmpty ? 'Car Library Number is required' : null,
               ),
               const SizedBox(height: 20),
+
+              // Camera Button
               ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade100,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
                 onPressed: _openCamera,
                 icon: const Icon(Icons.camera_alt),
                 label: const Text("Capture Image"),
               ),
-              const SizedBox(height: 10),
-              _capturedImage != null
-                  ? Image.file(_capturedImage!, height: 150)
-                  : const Text('No image selected'),
-              const SizedBox(height: 20),
-              const Text("Fingerprint Scan Placeholder ✅"),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+
+              // Image Preview
+              if (_capturedImage != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    _capturedImage!,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else
+                Container(
+                  height: 150,
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: const Text(
+                    'No image selected',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+
+              const SizedBox(height: 24),
+
+              const Row(
+                children: [
+                  Icon(Icons.fingerprint, color: Colors.grey),
+                  SizedBox(width: 8),
+                  Text(
+                    "Fingerprint Scan Placeholder ✅",
+                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Terms Button
               TextButton(
                 onPressed: () {
-                  // You can use Navigator to push Terms page
                   showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
                       title: const Text("Terms & Conditions"),
                       content: const Text(
-                          "By submitting, you accept all terms and conditions."),
+                        "By submitting, you accept all terms and conditions.",
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -126,17 +165,52 @@ class _RequestPageState extends State<RequestPage> {
                 },
                 child: const Text(
                   "Read Terms & Conditions",
-                  style: TextStyle(decoration: TextDecoration.underline),
+                  style: TextStyle(
+                    decoration: TextDecoration.underline,
+                    color: Colors.blueAccent,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submitRequest,
-                child: const Text("Submit Request"),
+
+              // Submit Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _submitRequest,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    "Submit Request",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
               )
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
       ),
     );
   }
