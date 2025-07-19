@@ -138,15 +138,20 @@ class _RecentCallsPageState extends State<RecentCallsContent> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            "Recent Calls",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-              letterSpacing: 1.2,
-              color: Colors.white
+          foregroundColor: Colors.white,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Text(
+              "Invite Passengers",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                letterSpacing: 1.2,
+                color: Colors.white,
+              ),
             ),
           ),
+
           backgroundColor: AppColors.primary,
           centerTitle: true,
           elevation: 4,
@@ -180,11 +185,10 @@ class _RecentCallsPageState extends State<RecentCallsContent> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text("Number: $number"),
-                          // Text("Type: ${formatCallType(call.callType)}"),
-                          // Text("Time: ${formatTimestamp(call.timestamp)}"),
+                          
                         ],
                       ),
-                      trailing: Icon(Icons.phone, color: Colors.green),
+                      
                     ),
                   );
                 },
@@ -193,8 +197,11 @@ class _RecentCallsPageState extends State<RecentCallsContent> {
             ? FloatingActionButton.extended(
                 onPressed: () =>
                     _sendMessageToSelected(widget.message, widget.shareLink),
-                icon: Icon(Icons.message,color: Colors.amber,),
-                label: Text("Send Message",style: TextStyle(color: Colors.white),),
+                icon: Icon(Icons.message, color: Colors.amber),
+                label: Text(
+                  "Send Message",
+                  style: TextStyle(color: Colors.white),
+                ),
                 backgroundColor: AppColors.primary,
               )
             : null,

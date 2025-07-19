@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dirgebeya/Provider/RequestProvider.dart';
-import 'package:dirgebeya/utils/token_storage.dart';
+import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -54,12 +54,13 @@ class _RequestPageState extends State<RequestPage> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF1455AC);
+    final primaryColor = AppColors.primary;
 
     return Scaffold(
       appBar: AppBar(
         title:  Text('Submit Request',style: TextStyle(color: Colors.white),),
         centerTitle: true,
+        foregroundColor: Colors.white,
         backgroundColor: primaryColor,
       ),
       body: SingleChildScrollView(
@@ -187,7 +188,7 @@ class _RequestPageState extends State<RequestPage> {
                   ),
                   child: const Text(
                     "Submit Request",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white),
                   ),
                 ),
               )

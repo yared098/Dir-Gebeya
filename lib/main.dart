@@ -16,6 +16,7 @@ import 'package:dirgebeya/Pages/SheetPages/TransactionScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/WalletPage.dart';
 import 'package:dirgebeya/Pages/SplashScreen.dart';
 import 'package:dirgebeya/Provider/RequestProvider.dart';
+import 'package:dirgebeya/Provider/TransactionProvider.dart';
 
 import 'package:dirgebeya/Provider/auth_provider.dart';
 import 'package:dirgebeya/Provider/banking_provider.dart';
@@ -77,6 +78,7 @@ void main() async {
         // reuest provider
         ChangeNotifierProvider(create: (_) => RequestProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_)=>TransactionProvider())
       ],
       child: const MyApp(),
     ),
@@ -104,7 +106,7 @@ class MyApp extends StatelessWidget {
             '/products': (context) => ProductListScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/wallet': (context) => WalletScreen(),
-            '/transaction': (context) => TransactionsScreen(),
+            '/transaction': (context) => TransactionScreen(),
             '/loan': (context) => LoanScreen(),
             '/messages': (context) => MessagesScreen(),
             '/bank-info': (context) => BankInfoScreen(),
