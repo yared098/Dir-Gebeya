@@ -84,4 +84,39 @@ class ProfileProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  /// New logout function calling API and clearing token on success
+  Future<bool> logout() async {
+    final token = await TokenStorage.getToken();
+    if (token == null) return false;
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/logout_api');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Logout success: clear stored token
+        print("logout success"+response.body);
+        await TokenStorage.clearToken();
+        _userProfile = null;
+        notifyListeners();
+        return true;
+      } else {
+        _error = "Logout failed (${response.statusCode})";
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = "Logout error: $e";
+      notifyListeners();
+      return false;
+    }
+  }
 }

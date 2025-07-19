@@ -28,9 +28,12 @@ import 'package:dirgebeya/Provider/order_detail_provider.dart';
 import 'package:dirgebeya/Provider/order_provider.dart.dart';
 import 'package:dirgebeya/Provider/products_provider.dart';
 import 'package:dirgebeya/Provider/profile_provider.dart';
+import 'package:dirgebeya/Provider/theme_provider.dart';
 import 'package:dirgebeya/Provider/wallet_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:telephony/telephony.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -41,8 +44,13 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-void main() {
+void main() async {
   HttpOverrides.global = MyHttpOverrides();
+  WidgetsFlutterBinding.ensureInitialized();
+    final Telephony telephony = Telephony.instance;
+
+  final prefs = await SharedPreferences.getInstance();
+  final String? localeCode = prefs.getString('locale');
   runApp(
     MultiProvider(
       providers: [
@@ -57,12 +65,7 @@ void main() {
         ),
 
         ChangeNotifierProvider(create: (_) => DispatchProvider()),
-        // ChangeNotifierProvider(
-        //   create: (_) =>
-        //       DispatchProvider()
-        //         ..fetchDispatches(dateFrom: '2025-06-03', dateTo: '2025-06-06'),
-        //   child: const RefundScreen(),
-        // ),
+      
         ChangeNotifierProvider(create: (_) => LoanProvider()),
         ChangeNotifierProvider(create: (_) => LoginProvider()),
         ChangeNotifierProvider(create: (_) => MyShopProvider()),
@@ -72,44 +75,46 @@ void main() {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => WalletProvider()),
         // reuest provider
-         ChangeNotifierProvider(create: (_) => RequestProvider()),
+        ChangeNotifierProvider(create: (_) => RequestProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
   );
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Dir Gebeya',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: SplashScreen(),
-      routes: {
-        '/login': (context) => LoginScreen(),
-        '/profile': (context) => MyProfileScreen(),
-        '/my-shop': (context) => MyShopScreen(),
-        '/products': (context) => ProductListScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/wallet': (context) => WalletScreen(),
-        '/transaction': (context) => TransactionsScreen(),
-        '/loan': (context) => LoanScreen(),
-        '/messages': (context) => MessagesScreen(),
-        '/bank-info': (context) => BankInfoScreen(),
-        '/terms': (context) => TermsAndConditionsScreen(),
-        // '/about': (context) => const AboutUsPage(),
-        '/loan-policy': (context) => LoanPolicyScreen(),
-        '/request': (context) =>  RequestPage(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Your App',
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: const SplashScreen(),
+          routes: {
+            '/login': (context) => LoginScreen(),
+            '/profile': (context) => MyProfileScreen(),
+            '/my-shop': (context) => MyShopScreen(),
+            '/products': (context) => ProductListScreen(),
+            '/settings': (context) => const SettingsScreen(),
+            '/wallet': (context) => WalletScreen(),
+            '/transaction': (context) => TransactionsScreen(),
+            '/loan': (context) => LoanScreen(),
+            '/messages': (context) => MessagesScreen(),
+            '/bank-info': (context) => BankInfoScreen(),
+            '/terms': (context) => TermsAndConditionsScreen(),
+            '/loan-policy': (context) => LoanPolicyScreen(),
+            '/request': (context) => RequestPage(),
+          },
+        );
       },
     );
   }
 }
-// 0979576251
-// omricon2012
+

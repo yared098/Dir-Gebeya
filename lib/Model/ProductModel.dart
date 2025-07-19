@@ -6,6 +6,8 @@ class ProductModel {
   final String productFeaturedImage;
   final int totalOrders;
   final String shareLink;
+  final String message;
+
 
   ProductModel({
     required this.productId,
@@ -15,6 +17,7 @@ class ProductModel {
     required this.productFeaturedImage,
     this.totalOrders = 0,
     this.shareLink = '',
+    required this.message,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +29,7 @@ class ProductModel {
       productFeaturedImage: json['product_featured_image'] ?? '',
       totalOrders: json['total_orders'] ?? 0,
       shareLink: json['share_link'] ?? '',
+      message: json['message']
     );
   }
 
@@ -38,6 +42,7 @@ class ProductModel {
       'product_featured_image': productFeaturedImage,
       'total_orders': totalOrders,
       'share_link': shareLink,
+      'message':message
     };
   }
 

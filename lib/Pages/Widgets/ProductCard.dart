@@ -1,4 +1,4 @@
-import 'package:dirgebeya/config/color.dart';
+import 'package:dirgebeya/Pages/Widgets/RecentCallsPage.dart';
 import 'package:flutter/material.dart';
 
 class ProductCard extends StatelessWidget {
@@ -7,6 +7,7 @@ class ProductCard extends StatelessWidget {
   final String soldCount;
   final String viewCount;
   final String shareLink;
+  final String message;
 
   const ProductCard({
     super.key,
@@ -15,22 +16,28 @@ class ProductCard extends StatelessWidget {
     required this.soldCount,
     required this.viewCount,
     required this.shareLink,
+    required this.message
+    
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Colors.grey[900] : Colors.white;
+    final textColor = isDark ? Colors.white70 : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.black54;
+
     return Material(
       elevation: 3,
       borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
+      color: cardColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          print("url"+image);
-          // Optional: handle card tap
+          print("url: $image");
         },
         child: Container(
-          height: 280, // Fix height to avoid overflow
+          height: 280,
           padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -43,8 +50,9 @@ class ProductCard extends StatelessWidget {
                   child: Image.network(
                     image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        const Center(child: Icon(Icons.image_not_supported, size: 40)),
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.image_not_supported, size: 40),
+                    ),
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return const Center(child: CircularProgressIndicator());
@@ -61,7 +69,11 @@ class ProductCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
               ),
 
               const SizedBox(height: 6),
@@ -70,8 +82,16 @@ class ProductCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _statChip(Icons.shopping_cart, '$soldCount sold'),
-                  _statChip(Icons.remove_red_eye, '$viewCount views'),
+                  _statChip(
+                    Icons.shopping_cart,
+                    '$soldCount sold',
+                    subtitleColor!,
+                  ),
+                  _statChip(
+                    Icons.remove_red_eye,
+                    '$viewCount views',
+                    subtitleColor,
+                  ),
                 ],
               ),
 
@@ -82,20 +102,35 @@ class ProductCard extends StatelessWidget {
                 height: 36,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                   icon: const Icon(Icons.share, size: 16),
-                  label: const Text("Share", style: TextStyle(fontSize: 13,color: Colors.white)),
+                  label: Text(
+                    "Share",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                   onPressed: () {
-                    // Your share logic here
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Share link copied: $shareLink")),
-                    );
-                  },
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return RecentCallsContent(
+        message: message,
+        shareLink: shareLink,
+      );
+    },
+  );
+},
+
                 ),
               ),
             ],
@@ -105,15 +140,12 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _statChip(IconData icon, String text) {
+  Widget _statChip(IconData icon, String text, Color textColor) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.grey.shade600),
+        Icon(icon, size: 14, color: textColor),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
+        Text(text, style: TextStyle(fontSize: 12, color: textColor)),
       ],
     );
   }

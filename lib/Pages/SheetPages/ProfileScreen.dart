@@ -93,15 +93,31 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                   radius: 28,
                   backgroundColor: const Color(0xFFE0E7FF),
                   child: user.avatar.isNotEmpty
+                      // ? ClipOval(
+                      //     child: Image.network(
+                      //       "https://direthiopia.com/assets/images/users/${user.avatar}",
+                      //       fit: BoxFit.cover,
+                      //       width: 56,
+                      //       height: 56,
+                      //       errorBuilder: (context, error, stackTrace) {
+                      //         return Image.asset(
+                      //           'assets/image/logo.png',
+                      //           fit: BoxFit.cover,
+                      //           width: 56,
+                      //           height: 56,
+                      //         );
+                      //       },
+                      //     ),
+                      //   )
                       ? ClipOval(
                           child: Image.network(
-                            "https://direthiopia.com/assets/images/users/${user.avatar}",
+                            'https://direthiopia.com/assets/images/users/${user.avatar ?? 'default.jpg'}',
                             fit: BoxFit.cover,
                             width: 56,
                             height: 56,
                             errorBuilder: (context, error, stackTrace) {
                               return Image.asset(
-                                'assets/image/logo.png', 
+                                'assets/image/logo.png',
                                 fit: BoxFit.cover,
                                 width: 56,
                                 height: 56,

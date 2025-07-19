@@ -5,6 +5,7 @@ class Product {
   final String imageUrl;
   final String? type;
   final bool? hasLimitedStock;
+  final String message;
 
   Product({
     this.productId,
@@ -13,6 +14,8 @@ class Product {
     required this.imageUrl,
     this.type,
     this.hasLimitedStock = false,
+    required this.message
+    
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -24,6 +27,7 @@ class Product {
       price: (json['product_price'] ?? json['price'] as num).toDouble(),
       imageUrl: json['product_featured_image'] ?? json['imageUrl'] ?? '',
       type: json['type'],
+      message:json['message'],
       hasLimitedStock: json['hasLimitedStock'] == true ||
           json['hasLimitedStock'] == 'true' ||
           json['hasLimitedStock'] == 1,
@@ -38,6 +42,7 @@ class Product {
       'product_featured_image': imageUrl,
       'type': type,
       'hasLimitedStock': hasLimitedStock,
+      'message':message,
     };
   }
 }

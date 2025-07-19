@@ -28,5 +28,11 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app needs access to contacts</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photos</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to microphone</string>
 </dict>
 </plist>

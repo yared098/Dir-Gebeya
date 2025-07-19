@@ -1,6 +1,5 @@
 import 'package:dirgebeya/Model/ProductModel.dart';
 import 'package:dirgebeya/Pages/Widgets/ProductCard.dart';
-// import 'package:dirgebeya/Pages/Widgets/statistics_widgets.dart';
 import 'package:dirgebeya/config/api_config.dart';
 import 'package:flutter/material.dart';
 
@@ -42,6 +41,7 @@ class TopProductsGrid extends StatelessWidget {
           soldCount: product.totalOrders?.toString() ?? '0',
           viewCount: product.viewStatistics?.toString() ?? '0',
           shareLink: product.shareLink ?? '',
+          message:product.message,
         );
       },
     );

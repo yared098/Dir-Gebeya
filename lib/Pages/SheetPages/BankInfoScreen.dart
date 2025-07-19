@@ -18,6 +18,7 @@ class _BankInfoScreenState extends State<BankInfoScreen> {
     // Fetch bank info once screen loads
     Future.microtask(() {
       Provider.of<BankingProvider>(context, listen: false).fetchBankInfo();
+      
     });
   }
 

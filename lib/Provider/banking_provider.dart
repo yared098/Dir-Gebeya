@@ -37,7 +37,7 @@ class BankingProvider extends ChangeNotifier {
       return;
     }
 
-    final url = Uri.parse('${ApiConfig.baseUrl}/add_payment'); // Adjust API URL
+    final url = Uri.parse('${ApiConfig.baseUrl}/profile_api'); // Adjust API URL
     print("url_bank"+url.toString());
     try {
       final response = await http.get(url, headers: {
@@ -46,6 +46,7 @@ class BankingProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+          print("bankdata"+data.toString());
       
         // Assign fetched data (adjust keys to your API)
         bankName = data['bank_name'] ?? '';
