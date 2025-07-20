@@ -66,7 +66,6 @@ class AppMenuGrid extends StatelessWidget {
     {
       'icon': "assets/image/profile.png",
       'label': 'Profile',
-      // 'color': Color(0xff4a90e2),
       'route': '/profile',
     },
     {
@@ -78,7 +77,6 @@ class AppMenuGrid extends StatelessWidget {
     {
       'icon': "assets/image/product.png",
       'label': 'Products',
-      // 'color': Color(0xfff5a623),
       'route': '/products',
     },
     {
@@ -90,7 +88,6 @@ class AppMenuGrid extends StatelessWidget {
     {
       'icon': "assets/image/wallet.png",
       'label': 'Wallet',
-      // 'color': Color(0xff2ecc71),
       'route': '/wallet',
     },
     {
@@ -146,10 +143,9 @@ class AppMenuGrid extends StatelessWidget {
     {
       'icon': "assets/image/app-info.png",
       'label': 'v - 15.2',
-      'route': null, // No route
+      'route': null,
     },
 
-    // RequestPage
   ];
 
   @override

@@ -1,3 +1,4 @@
+import 'package:dirgebeya/Pages/ProductDetailPage.dart' show ProductDetailPage;
 import 'package:dirgebeya/Pages/Widgets/RecentCallsPage.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +9,7 @@ class ProductCard extends StatelessWidget {
   final String viewCount;
   final String shareLink;
   final String message;
+  final int id;
 
   const ProductCard({
     super.key,
@@ -17,6 +19,7 @@ class ProductCard extends StatelessWidget {
     required this.viewCount,
     required this.shareLink,
     required this.message,
+    required this.id,
   });
 
   @override
@@ -42,20 +45,35 @@ class ProductCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Product Image
-              AspectRatio(
-                aspectRatio: 1.2,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.image_not_supported, size: 40),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductDetailPage(
+                        title: title,
+                        image: image,
+                        price: '',
+                        productId: id,
+                      ),
                     ),
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(child: CircularProgressIndicator());
-                    },
+                  );
+                },
+                child: AspectRatio(
+                  aspectRatio: 1.2,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(Icons.image_not_supported, size: 40),
+                      ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                    ),
                   ),
                 ),
               ),

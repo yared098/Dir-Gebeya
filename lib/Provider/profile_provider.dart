@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
@@ -158,6 +159,8 @@ Future<bool> uploadProfileImage(File imageFile) async {
     final response = await request.send();
 
     if (response.statusCode == 200) {
+      print(response.statusCode.toString()+"uploaded");
+      _error = "Upload done (${response.statusCode})";
       await fetchProfile(); // refresh profile with new avatar
       return true;
     } else {
@@ -169,6 +172,66 @@ Future<bool> uploadProfileImage(File imageFile) async {
     _error = "Upload error: $e";
     notifyListeners();
     return false;
+  }
+}
+
+Future<void> updateUserStatusInfo() async {
+  final token = await TokenStorage.getToken();
+  if (token == null) return;
+
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _error = 'Location services are disabled.';
+      notifyListeners();
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _error = 'Location permissions are denied';
+        notifyListeners();
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _error = 'Location permissions are permanently denied';
+      notifyListeners();
+      return;
+    }
+
+    final Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    final now = DateTime.now().toIso8601String();
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/user_status_api');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'timestamp': now,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("User status updated");
+    } else {
+      _error = "Status update failed: ${response.statusCode}";
+      notifyListeners();
+    }
+  } catch (e) {
+    _error = "Error updating status: $e";
+    notifyListeners();
   }
 }
 

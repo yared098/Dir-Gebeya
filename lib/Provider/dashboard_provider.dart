@@ -1,9 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dirgebeya/Model/ProductModel.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
+import '../utils/token_storage.dart';
+import 'package:mime/mime.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
 
 class DashboardProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -53,43 +61,6 @@ class DashboardProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-  
-// Future<void> fetchTopProducts() async {
-//   try {
-//     _isLoading = true;
-//     notifyListeners();
-
-//     final token = await TokenStorage.getToken();
-//     if (token == null) {
-//       _error = "User not authenticated.";
-//       _isLoading = false;
-//       notifyListeners();
-//       return;
-//     }
-
-//     final response = await http.get(
-//       Uri.parse('https://direthiopia.com/api/v3/seller/dashboard_api?action=products'),
-//       headers: {
-//         'Authorization': 'Bearer $token',
-//         'Content-Type': 'application/json',
-//       },
-//     );
-
-//     if (response.statusCode == 200) {
-//       final data = jsonDecode(response.body);
-//       print("dash_products"+data.toString());
-//       final productList = data['products'] as List<dynamic>;
-//       _products = productList.map((p) => ProductModel.fromJson(p)).toList();
-//     } else {
-//       _error = 'Failed to fetch products';
-//     }
-//   } catch (e) {
-//     _error = e.toString();
-//   } finally {
-//     _isLoading = false;
-//     notifyListeners();
-//   }
-// }
 
 
 Future<void> fetchTopProducts() async {
@@ -166,4 +137,55 @@ Future<void> fetchTopProducts() async {
     _isLoading = false;
     notifyListeners();
   }
+
+  Future<bool> updateProduct({
+  required int productId,
+  required String name,
+  required String price,
+  File? imageFile,
+}) async {
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = "Unauthorized";
+    notifyListeners();
+    return false;
+  }
+
+  try {
+    final uri = Uri.parse("https://direthiopia.com/api/v3/seller/products_api");
+
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['product_id'] = productId.toString()
+      ..fields['product_name'] = name
+      ..fields['product_price'] = price;
+
+    if (imageFile != null) {
+      final mimeType = lookupMimeType(imageFile.path)?.split('/') ?? ['image', 'jpeg'];
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          imageFile.path,
+          contentType: MediaType(mimeType[0], mimeType[1]),
+        ),
+      );
+    }
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      await fetchTopProducts(); // refresh updated list
+      return true;
+    } else {
+      _error = "Failed to update product (${response.statusCode})";
+      notifyListeners();
+      return false;
+    }
+  } catch (e) {
+    _error = "Update error: $e";
+    notifyListeners();
+    return false;
+  }
+}
+
 }

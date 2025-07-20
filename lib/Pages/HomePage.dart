@@ -336,29 +336,40 @@ class _DashboardScreenState extends State<HomePage> {
     );
   }
 
-  Widget _buildRowCards(Map<String, dynamic>? earningsData) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-      child: Container(
-        decoration: BoxDecoration(
-          // color: Colors.blue,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [_buildCircularIconsRow(context, earningsData)],
-        ),
+ Widget _buildRowCards(Map<String, dynamic>? earningsData) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white, // Light background
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-    );
-  }
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Vendor Tools Overview",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildCircularIconsRow(context, earningsData),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildCircularIconsRow(
     BuildContext context,
@@ -394,52 +405,54 @@ class _DashboardScreenState extends State<HomePage> {
     );
   }
 
-  Widget _buildIconCard(
-    BuildContext context, {
-    required String title,
-    required String value,
-    required IconData icon,
-    required String route, // You can keep it for future use
-  }) {
-    return GestureDetector(
-      onTap: () => _showInfoDialog(context, title, value, icon),
-      child: Container(
-        width: 80,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: AppColors.primary.withOpacity(0.1),
-              child: Icon(icon, color: AppColors.primary, size: 28),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+ Widget _buildIconCard(
+  BuildContext context, {
+  required String title,
+  required String value,
+  required IconData icon,
+  required String route,
+  Color cardColor = const Color.fromARGB(255, 250, 250, 250), // Optional card background
+}) {
+  return GestureDetector(
+    onTap: () => _showInfoDialog(context, title, value, icon),
+    child: Container(
+      width: 70,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-    );
-  }
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: Colors.white,
+            child: Icon(icon, color: AppColors.primary, size: 22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   // void _showInfoDialog(BuildContext context, String title, String value, IconData icon) {
   //   showDialog(

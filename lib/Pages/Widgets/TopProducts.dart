@@ -42,6 +42,7 @@ class TopProductsGrid extends StatelessWidget {
           viewCount: product.viewStatistics?.toString() ?? '0',
           shareLink: product.shareLink ?? '',
           message:product.message,
+          id: product.productId,
         );
       },
     );
