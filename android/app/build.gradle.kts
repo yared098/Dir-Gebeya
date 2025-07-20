@@ -5,6 +5,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 android {
+    namespace = "com.example.telephony" // or the actual package name of telephony
     namespace = "com.example.dirgebeya"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

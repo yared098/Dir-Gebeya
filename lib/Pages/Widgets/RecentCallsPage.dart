@@ -3,7 +3,7 @@ import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:telephony/telephony.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 class RecentCallsContent extends StatefulWidget {
@@ -17,7 +17,7 @@ class RecentCallsContent extends StatefulWidget {
 }
 
 class _RecentCallsPageState extends State<RecentCallsContent> {
-  final Telephony telephony = Telephony.instance;
+
 
   List<CallLogEntry> _calls = [];
   Set<String> _selectedNumbers = {};

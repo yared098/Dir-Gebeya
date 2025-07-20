@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:dirgebeya/Pages/Widgets/UpdateMyShopBottom.dart';
 import 'package:dirgebeya/Provider/myshop_provider.dart';
+import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,7 +39,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
         ),
         title: const Text(
           'My Shop',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -64,7 +66,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                   const SizedBox(height: 110), // Space for the overlapping card
                   _buildStatsRow(),
                   const SizedBox(height: 24),
-                  _buildToggleCard('Temporary Close', _isTempClosed, (value) {
+                  _buildToggleCard('Accept Delivery', _isTempClosed, (value) {
                     setState(() => _isTempClosed = value);
                   }),
                   const SizedBox(height: 16),
@@ -89,7 +91,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
         color: const Color(0xFFD1EEF7),
         child: Stack(
           children: [
-            
             Positioned(
               right: 16,
               top: 50,
@@ -185,16 +186,21 @@ class _MyShopScreenState extends State<MyShopScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.edit_outlined,
-                            color: Colors.white,
-                            size: 20,
+                        GestureDetector(
+                          onTap: () {
+                            showEditBottomSheetMyShop(context, shop);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.edit_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ],
@@ -239,8 +245,8 @@ class _MyShopScreenState extends State<MyShopScreen> {
     return Consumer<MyShopProvider>(
       builder: (context, provider, _) {
         final productCount = provider.shop?.totalProducts.toString() ?? '--';
-        final _view=provider.shop!.view??0;
-        print("productscount"+productCount.toString());
+        final _view = provider.shop!.view ?? 0;
+        print("productscount" + productCount.toString());
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

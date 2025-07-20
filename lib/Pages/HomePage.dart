@@ -1,10 +1,13 @@
-import 'package:dirgebeya/Pages/Products.dart';
+import 'package:barcode_widget/barcode_widget.dart';
+
 import 'package:dirgebeya/Pages/Widgets/TopProducts.dart';
 // import 'package:dirgebeya/Pages/Widgets/statistics_widgets.dart';
 import 'package:dirgebeya/Provider/dashboard_provider.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:share_plus/share_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,10 +17,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<HomePage> {
-  int _selectedIndex = 0;
   String _dropdownValue = 'OverAll';
-  String _earningsType = 'monthly'; // Default earnings type
-  final String sellerId = '2040'; // Set your seller ID here
+  String _earningsType = 'monthly';
+  final String sellerId = '2040';
+
+ 
 
   @override
   void initState() {
@@ -80,7 +84,10 @@ class _DashboardScreenState extends State<HomePage> {
                             _buildEarningsSection(
                               dashboardProvider.earningsData,
                             ),
-                            // _buildEarningsSummary(dashboardProvider.earningsData),
+
+                            _buildRowCards(dashboardProvider.overviewData),
+
+                           
                             const SizedBox(height: 20),
                             _buildSectionTitle('Ongoing Orders'),
                             const SizedBox(height: 16),
@@ -88,7 +95,7 @@ class _DashboardScreenState extends State<HomePage> {
                             const SizedBox(height: 24),
                             _buildSectionTitle('Completed Orders'),
                             const SizedBox(height: 8),
-                            _buildCompletedOrdersList(context,overview),
+                            _buildCompletedOrdersList(context, overview),
                             const SizedBox(height: 10),
                           ]),
                         ),
@@ -122,146 +129,79 @@ class _DashboardScreenState extends State<HomePage> {
     );
   }
 
-  // PreferredSizeWidget _buildAppBar(BuildContext context) {
-  //   return PreferredSize(
-  //     preferredSize: const Size.fromHeight(
-  //       60,
-  //     ), // Set the height of your custom app bar
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-  //       color: Colors.white,
-  //       child: Row(
-  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //         children: [
-  //           Row(
-  //             children: [
-  //               ClipPath(
-  //                 child: Container(
-  //                   width: 40,
-  //                   height: 45,
-  //                   padding: const EdgeInsets.all(6.0),
-  //                   child: Image.asset(
-  //                     'assets/image/logo.png',
-  //                     fit: BoxFit.contain,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 8),
-  //               const Text(
-  //                 'ባለመሪው ነጋዴ',
-  //                 style: TextStyle(
-  //                   fontSize: 22,
-  //                   fontWeight: FontWeight.bold,
-  //                   color: Color(0xFFA61E49),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           Stack(
-  //             alignment: Alignment.topRight,
-  //             children: [
-  //               Icon(
-  //                 Icons.notifications_none_outlined,
-  //                 color: Theme.of(context).primaryColor,
-  //                 size: 30,
-  //               ),
-  //               Container(
-  //                 width: 18,
-  //                 height: 18,
-  //                 margin: const EdgeInsets.only(top: 2, right: 2),
-  //                 decoration: BoxDecoration(
-  //                   color: Colors.red,
-  //                   shape: BoxShape.circle,
-  //                   border: Border.all(color: Colors.white, width: 2),
-  //                 ),
-  //                 child: const Center(
-  //                   child: Text(
-  //                     '0',
-  //                     style: TextStyle(
-  //                       color: Colors.white,
-  //                       fontSize: 10,
-  //                       fontWeight: FontWeight.bold,
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-
-PreferredSizeWidget _buildAppBar(BuildContext context) {
-  return PreferredSize(
-    preferredSize: const Size.fromHeight(60),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              ClipPath(
-                child: Container(
-                  width: 40,
-                  height: 45,
-                  padding: const EdgeInsets.all(6.0),
-                  child: Image.asset(
-                    'assets/image/logo.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'ባለመሪው ነጋዴ',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.headlineLarge?.color ?? const Color(0xFFA61E49),
-                ),
-              ),
-            ],
-          ),
-          Stack(
-            alignment: Alignment.topRight,
-            children: [
-              Icon(
-                Icons.notifications_none_outlined,
-                color: Theme.of(context).primaryColor,
-                size: 30,
-              ),
-              Container(
-                width: 18,
-                height: 18,
-                margin: const EdgeInsets.only(top: 2, right: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Center(
-                  child: Text(
-                    '0',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+  
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        color:
+            Theme.of(context).appBarTheme.backgroundColor ??
+            Theme.of(context).scaffoldBackgroundColor,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                ClipPath(
+                  child: Container(
+                    width: 40,
+                    height: 45,
+                    padding: const EdgeInsets.all(6.0),
+                    child: Image.asset(
+                      'assets/image/logo.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                Text(
+                  'ባለመሪው ነጋዴ',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        Theme.of(context).textTheme.headlineLarge?.color ??
+                        const Color(0xFFA61E49),
+                  ),
+                ),
+              ],
+            ),
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Icon(
+                  Icons.notifications_none_outlined,
+                  color: Theme.of(context).primaryColor,
+                  size: 30,
+                ),
+                Container(
+                  width: 18,
+                  height: 18,
+                  margin: const EdgeInsets.only(top: 2, right: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '0',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   /// Builds the "Business Analytics" header with the dropdown.
   Widget _buildAnalyticsHeader() {
@@ -314,22 +254,21 @@ PreferredSizeWidget _buildAppBar(BuildContext context) {
   }
 
   /// Builds the title for a section.
-Widget _buildSectionTitle(String title) {
-  return Builder(
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      return Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: isDark ? Colors.white : const Color(0xFF1455AC),
-        ),
-      );
-    },
-  );
-}
-
+  Widget _buildSectionTitle(String title) {
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : const Color(0xFF1455AC),
+          ),
+        );
+      },
+    );
+  }
 
   /// Builds the 2x2 grid for ongoing orders.
   Widget _buildOngoingOrdersGrid(Map<String, dynamic>? data) {
@@ -394,6 +333,263 @@ Widget _buildSectionTitle(String title) {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRowCards(Map<String, dynamic>? earningsData) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      child: Container(
+        decoration: BoxDecoration(
+          // color: Colors.blue,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [_buildCircularIconsRow(context, earningsData)],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularIconsRow(
+    BuildContext context,
+    Map<String, dynamic>? data,
+  ) {
+    if (data == null) return const SizedBox();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildIconCard(
+          context,
+          title: 'Promo',
+          value: '${data['advert'] ?? '0'}',
+          icon: Icons.campaign,
+          route: '/advert',
+        ),
+        _buildIconCard(
+          context,
+          title: 'My Shop',
+          value: '${data['vendor_store'] ?? '0'}',
+          icon: Icons.store,
+          route: '/vendorstore',
+        ),
+        _buildIconCard(
+          context,
+          title: 'Referral',
+          value: '${data['referal'] ?? '0'}',
+          icon: Icons.group_add,
+          route: '/referral',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required String route, // You can keep it for future use
+  }) {
+    return GestureDetector(
+      onTap: () => _showInfoDialog(context, title, value, icon),
+      child: Container(
+        width: 80,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              child: Icon(icon, color: AppColors.primary, size: 28),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // void _showInfoDialog(BuildContext context, String title, String value, IconData icon) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     builder: (BuildContext context) {
+  //       return Dialog(
+  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+  //         backgroundColor: Colors.white,
+  //         child: Padding(
+  //           padding: const EdgeInsets.all(20),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Align(
+  //                 alignment: Alignment.topRight,
+  //                 child: GestureDetector(
+  //                   onTap: () => Navigator.pop(context),
+  //                   child: const Icon(Icons.close, color: Colors.black54),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 10),
+  //               CircleAvatar(
+  //                 radius: 30,
+  //                 backgroundColor: AppColors.primary.withOpacity(0.1),
+  //                 child: Icon(
+  //                   icon,
+  //                   color: AppColors.primary,
+  //                   size: 32,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 16),
+  //               Text(
+  //                 title,
+  //                 style: const TextStyle(
+  //                   fontSize: 18,
+  //                   fontWeight: FontWeight.bold,
+  //                   color: Colors.black87,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 8),
+  //               Text(
+  //                 value,
+  //                 style: TextStyle(
+  //                   fontSize: 20,
+  //                   fontWeight: FontWeight.w600,
+  //                   color: AppColors.primary,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 20),
+
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  void _showInfoDialog(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
+    bool isBarcode =
+        (title == 'Referral' || title == 'My Shop') &&
+        Uri.tryParse(value)?.hasAbsolutePath == true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close, color: Colors.black54),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  child: Icon(icon, color: AppColors.primary, size: 32),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Show QR code if it's a URL
+                isBarcode
+                    ? Column(
+                        children: [
+                          BarcodeWidget(
+                            barcode: Barcode.qrCode(),
+                            data: value,
+                            width: 200,
+                            height: 200,
+                            color: Colors.black,
+                            backgroundColor: Colors.white,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Scan or tap to open",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              Share.share(value, subject: 'Check this out!');
+                            },
+                            icon: const Icon(Icons.share),
+                            label: const Text('Share Link'),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -521,165 +717,180 @@ Widget _buildSectionTitle(String title) {
   //   );
   // }
 
+  Widget _buildOrderCard({
+    required String count,
+    required String label,
+    required Color color,
+    required Color lightColor,
+  }) {
+    final theme = Theme.of(context);
+    final cardColor = theme.brightness == Brightness.dark ? lightColor : color;
 
-Widget _buildOrderCard({
-  required String count,
-  required String label,
-  required Color color,
-  required Color lightColor,
-}) {
-  final theme = Theme.of(context);
-  final cardColor = theme.brightness == Brightness.dark ? lightColor : color;
-
-  return Container(
-    decoration: BoxDecoration(
-      color: cardColor,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Stack(
-      clipBehavior: Clip.hardEdge,
-      children: [
-        Positioned(
-          right: -20,
-          top: -20,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: cardColor.withOpacity(0.5),
-              shape: BoxShape.circle,
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: cardColor.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                count,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 35,
-                  fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  count,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 35,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const Spacer(),
+                const Spacer(),
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the list of completed order statuses.
+  Widget _buildCompletedOrdersList(
+    BuildContext context,
+    Map<String, dynamic>? data,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        _buildCompletedOrderItem(
+          iconData: Icons.do_not_disturb_on_total_silence,
+          iconColor: Colors.green,
+          label: 'Total',
+          count: data?['total_orders'].toString() ?? '0',
+          countColor: isDark
+              ? Colors.green.withOpacity(0.2)
+              : Colors.green.withOpacity(0.1),
+          countTextColor: isDark
+              ? Colors.green.shade300
+              : Colors.green.shade800,
+          context: context,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.check_circle,
+          iconColor: Colors.green,
+          label: 'Delivered',
+          count: data?['completed_orders'].toString() ?? '0',
+          countColor: isDark
+              ? Colors.green.withOpacity(0.2)
+              : Colors.green.withOpacity(0.1),
+          countTextColor: isDark
+              ? const Color.fromARGB(255, 188, 250, 191)
+              : Colors.green.shade800,
+          context: context,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.cancel,
+          iconColor: Colors.red,
+          label: 'Cancelled',
+          count: data?['pending_orders'].toString() ?? '0',
+          countColor: isDark
+              ? Colors.red.withOpacity(0.2)
+              : Colors.red.withOpacity(0.1),
+          countTextColor: isDark ? Colors.red.shade300 : Colors.red.shade800,
+          context: context,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.assignment_return,
+          iconColor: Colors.orange.shade700,
+          label: 'Return',
+          count: data?['refunded_orders'].toString() ?? '0',
+          countColor: isDark
+              ? Colors.grey.withOpacity(0.3)
+              : Colors.grey.withOpacity(0.2),
+          countTextColor: isDark ? Colors.white70 : Colors.black54,
+          context: context,
+        ),
+        _buildCompletedOrderItem(
+          iconData: Icons.warning_amber_rounded,
+          iconColor: Colors.red.shade700,
+          label: 'Failed to Delivery',
+          count: data?['failed_orders'].toString() ?? '0',
+          countColor: isDark
+              ? Colors.red.withOpacity(0.2)
+              : Colors.red.withOpacity(0.1),
+          countTextColor: isDark ? Colors.red.shade300 : Colors.red.shade800,
+          context: context,
+        ),
+      ],
+    );
+  }
+
+  /// Helper to build a single item in the completed orders list.
+  Widget _buildCompletedOrderItem({
+    required BuildContext context,
+    required IconData iconData,
+    required Color iconColor,
+    required String label,
+    required String count,
+    required Color countColor,
+    required Color countTextColor,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(iconData, color: iconColor, size: 28),
+              const SizedBox(width: 16),
               Text(
                 label,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
               ),
             ],
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-  /// Builds the list of completed order statuses.
- Widget _buildCompletedOrdersList(BuildContext context, Map<String, dynamic>? data) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-
-  return Column(
-    children: [
-      _buildCompletedOrderItem(
-        iconData: Icons.do_not_disturb_on_total_silence,
-        iconColor: Colors.green,
-        label: 'Total',
-        count: data?['total_orders'].toString() ?? '0',
-        countColor: isDark ? Colors.green.withOpacity(0.2) : Colors.green.withOpacity(0.1),
-        countTextColor: isDark ? Colors.green.shade300 : Colors.green.shade800,
-        context: context,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.check_circle,
-        iconColor: Colors.green,
-        label: 'Delivered',
-        count: data?['completed_orders'].toString() ?? '0',
-        countColor: isDark ? Colors.green.withOpacity(0.2) : Colors.green.withOpacity(0.1),
-        countTextColor: isDark ? const Color.fromARGB(255, 188, 250, 191) : Colors.green.shade800, context: context,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.cancel,
-        iconColor: Colors.red,
-        label: 'Cancelled',
-        count: data?['pending_orders'].toString() ?? '0',
-        countColor: isDark ? Colors.red.withOpacity(0.2) : Colors.red.withOpacity(0.1),
-        countTextColor: isDark ? Colors.red.shade300 : Colors.red.shade800,
-        context: context,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.assignment_return,
-        iconColor: Colors.orange.shade700,
-        label: 'Return',
-        count: data?['refunded_orders'].toString() ?? '0',
-        countColor: isDark ? Colors.grey.withOpacity(0.3) : Colors.grey.withOpacity(0.2),
-        countTextColor: isDark ? Colors.white70 : Colors.black54,
-        context: context,
-      ),
-      _buildCompletedOrderItem(
-        iconData: Icons.warning_amber_rounded,
-        iconColor: Colors.red.shade700,
-        label: 'Failed to Delivery',
-        count: data?['failed_orders'].toString() ?? '0',
-        countColor: isDark ? Colors.red.withOpacity(0.2) : Colors.red.withOpacity(0.1),
-        countTextColor: isDark ? Colors.red.shade300 : Colors.red.shade800,
-        context: context,
-      ),
-    ],
-  );
-}
-
-  /// Helper to build a single item in the completed orders list.
- Widget _buildCompletedOrderItem({
-  required BuildContext context,
-  required IconData iconData,
-  required Color iconColor,
-  required String label,
-  required String count,
-  required Color countColor,
-  required Color countTextColor,
-}) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 12.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(iconData, color: iconColor, size: 28),
-            const SizedBox(width: 16),
-            Text(
-              label,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: countColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              count,
               style: TextStyle(
-                fontSize: 16,
-                color: isDark ? Colors.white70 : Colors.black87,
+                fontWeight: FontWeight.bold,
+                color: countTextColor,
               ),
             ),
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: countColor,
-            borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            count,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: countTextColor,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
+        ],
+      ),
+    );
+  }
 }

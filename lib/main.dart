@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dirgebeya/Pages/LoginPage.dart';
-import 'package:dirgebeya/Pages/RefundPage.dart';
+import 'package:dirgebeya/Pages/Delivery_Screen.dart';
 import 'package:dirgebeya/Pages/SheetPages/BankInfoScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/LoanPolicyScreen.dart';
 import 'package:dirgebeya/Pages/SheetPages/LoanScreen.dart';
@@ -34,7 +34,7 @@ import 'package:dirgebeya/Provider/wallet_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:telephony/telephony.dart';
+
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -48,7 +48,7 @@ class MyHttpOverrides extends HttpOverrides {
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
-    final Telephony telephony = Telephony.instance;
+   
 
   final prefs = await SharedPreferences.getInstance();
   final String? localeCode = prefs.getString('locale');

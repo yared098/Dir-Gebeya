@@ -43,6 +43,8 @@ class Dispatch {
       remarks: json['remarks'],
     );
   }
+
+  get driverPhone => null;
 }
 
 class DispatchProvider extends ChangeNotifier {

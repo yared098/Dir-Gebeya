@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
+import 'package:mime/mime.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class UserProfile {
   final String firstName;
@@ -65,13 +69,14 @@ class ProfileProvider extends ChangeNotifier {
     final url = Uri.parse('${ApiConfig.baseUrl}/profile_api');
 
     try {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
-      print("token_pr"+token);
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      print("token_pr" + token);
 
       if (response.statusCode == 200) {
-        print("profile1"+response.body.toString());
+        print("profile1" + response.body.toString());
         final data = jsonDecode(response.body);
         _userProfile = UserProfile.fromJson(data);
       } else {
@@ -103,7 +108,7 @@ class ProfileProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         // Logout success: clear stored token
-        print("logout success"+response.body);
+        print("logout success" + response.body);
         await TokenStorage.clearToken();
         _userProfile = null;
         notifyListeners();
@@ -119,4 +124,53 @@ class ProfileProvider extends ChangeNotifier {
       return false;
     }
   }
+
+Future<bool> uploadProfileImage(File imageFile) async {
+  final token = await TokenStorage.getToken();
+  if (token == null) return false;
+
+  // Check file size: max 2MB
+  final int maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
+  final int fileSize = await imageFile.length();
+
+  if (fileSize > maxFileSize) {
+    _error = "Image size should not exceed 2MB.";
+    notifyListeners();
+    return false;
+  }
+
+  final url = Uri.parse('${ApiConfig.baseUrl}/profile_api');
+
+  try {
+    final mimeType =
+        lookupMimeType(imageFile.path)?.split('/') ?? ['image', 'jpeg'];
+
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'profile_pic',
+          imageFile.path,
+          contentType: MediaType(mimeType[0], mimeType[1]),
+        ),
+      );
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      await fetchProfile(); // refresh profile with new avatar
+      return true;
+    } else {
+      _error = "Upload failed (${response.statusCode})";
+      notifyListeners();
+      return false;
+    }
+  } catch (e) {
+    _error = "Upload error: $e";
+    notifyListeners();
+    return false;
+  }
+}
+
+
 }

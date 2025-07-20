@@ -1,4 +1,5 @@
 // Create a RouteObserver that you provide to MaterialApp
+import 'package:dirgebeya/Pages/Widgets/BottomSheetDashBoard.dart';
 import 'package:flutter/material.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
@@ -55,31 +56,6 @@ class _MenuDemoScreenState extends State<MenuDemoScreen> with RouteAware {
   }
 }
 
-// This function can be called from anywhere to show the menu
-void showAppMenuBottomSheet(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (_, controller) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
-            ),
-            child: AppMenuGrid(parentContext: context), // ✅ Pass context
-          );
-        },
-      );
-    },
-  );
-}
-
 
 class AppMenuGrid extends StatelessWidget {
   const AppMenuGrid({super.key, required BuildContext parentContext});
@@ -132,14 +108,12 @@ class AppMenuGrid extends StatelessWidget {
     {
       'icon': "assets/image/terms-and-conditions.png",
       'label': 'Terms & C...',
-      // 'color': Color(0xfff39c12),
       'route': '/terms',
     },
 
     {
       'icon': "assets/image/transactions.png",
       'label': 'Transaction',
-      // 'color': Color(0xff16a085),
       'route': '/transaction',
     },
     {
@@ -157,25 +131,21 @@ class AppMenuGrid extends StatelessWidget {
     {
       'icon': "assets/image/refund_policy.png",
       'label': 'Loan policy...',
-      // 'color': Color(0xffd35400),
       'route': '/loan-policy',
     },
     {
       'icon': "assets/image/logout.png",
       'label': 'Logout',
-      // 'color': Color(0xff34495e),
       'route': '/logout',
     },
     {
-      'icon': "assets/image/logout.png",
+      'icon': "assets/image/refunds.png",
       'label': 'Request',
-      // 'color': Color(0xff34495e),
       'route': '/request',
     },
     {
       'icon': "assets/image/app-info.png",
       'label': 'v - 15.2',
-      // 'color': Colors.blueGrey,
       'route': null, // No route
     },
 

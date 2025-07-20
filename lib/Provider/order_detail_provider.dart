@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
 
@@ -59,6 +60,7 @@ class Order {
   final String files;
   final String? comment;
   final String createdAt;
+  
 
   Order({
     required this.id,
@@ -125,6 +127,7 @@ class OrderProduct {
   final int quantity;
   final double total;
   final Vendor vendor;
+  final String profile;
 
   OrderProduct({
     required this.productId,
@@ -134,6 +137,7 @@ class OrderProduct {
     required this.quantity,
     required this.total,
     required this.vendor,
+    required this.profile,
   });
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
@@ -145,6 +149,7 @@ class OrderProduct {
       quantity: json['quantity'],
       total: (json['total'] as num).toDouble(),
       vendor: Vendor.fromJson(json['vendor']),
+      profile: json['profile'],
     );
   }
 }
@@ -247,6 +252,8 @@ class OrderDetailProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        print("order_detial"+response.body.toString());
+        
         final data = jsonDecode(response.body);
         final parsed = OrderDetailResponse.fromJson(data);
 
@@ -265,4 +272,48 @@ class OrderDetailProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+Future<bool> approveOrder(int orderId) async {
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = "Unauthorized";
+    notifyListeners();
+    return false;
+  }
+
+  final url = Uri.parse("https://direthiopia.com/api/v3/seller/dispatcher?action=accept");
+
+  // Format current time as 'yyyy-MM-dd HH-mm-ss'
+  final now = DateTime.now();
+  final formattedTime = DateFormat('yyyy-MM-dd HH-mm-ss').format(now);
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'order_id': orderId.toString(),  // send as string if required
+        'accepted_time': formattedTime,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      await fetchOrderDetail(orderId); // Refresh state
+      return true;
+    } else {
+      _error = "Approval failed: ${response.statusCode}";
+      notifyListeners();
+      return false;
+    }
+  } catch (e) {
+    _error = "Network error: $e";
+    notifyListeners();
+    return false;
+  }
+}
+
+
 }

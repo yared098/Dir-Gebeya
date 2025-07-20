@@ -1,7 +1,9 @@
 // --- REFUND SCREEN WIDGET ---
 import 'dart:ui';
 
+import 'package:dirgebeya/Model/Order.dart';
 import 'package:dirgebeya/Model/RefundStatus.dart';
+import 'package:dirgebeya/Pages/DeliveryDetailPage.dart';
 import 'package:dirgebeya/Provider/dispatch_provider.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
@@ -320,40 +322,95 @@ class DispatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusDetails = _getStatusDetails(dispatch.status ?? '');
+    final paymentDetails = _getPaymentDetails(dispatch.pickupTime ?? '');
+
     return GestureDetector(
       onTap: () {
-        _showUpdateBottomSheet(context, dispatch);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DispatchDetailPage(orderId: dispatch.id),
+          ),
+        );
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        elevation: 3,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.grey.shade200),
-        ),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header section
+              // Top row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Order# ${dispatch.orderId}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    'Order# ${dispatch.id}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                      fontSize: 16,
+                    ),
                   ),
-                  const Icon(Icons.info_outline), // Info icon to hint tap
+                  const Icon(Icons.info_outline, color: Colors.grey),
                 ],
               ),
               const SizedBox(height: 8),
-              Text('Status: ${dispatch.status}', style: const TextStyle(color: Colors.black87)),
-              Text('Driver ID: ${dispatch.driverId}', style: const TextStyle(color: Colors.grey)),
-              Text('Assigned: ${dispatch.assignedTime}', style: const TextStyle(color: Colors.grey)),
-              if (dispatch.remarks.isNotEmpty)
-                Text('Remarks: ${dispatch.remarks}', style: const TextStyle(color: Colors.grey)),
+              Text(dispatch.assignedTime ?? '', style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 12),
+              // Status & Payment Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        statusDetails['icon'],
+                        color: statusDetails['color'],
+                        size: 20,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        dispatch.status ?? 'Unknown',
+                        style: TextStyle(
+                          color: statusDetails['color'],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        paymentDetails['text'],
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        paymentDetails['icon'],
+                        color: paymentDetails['color'],
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Driver ID: ${dispatch.driverId ?? 'N/A'}',
+                style: const TextStyle(color: Colors.black87),
+              ),
+              if ((dispatch.remarks ?? '').isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Remarks: ${dispatch.remarks}',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                ),
             ],
           ),
         ),
@@ -361,148 +418,33 @@ class DispatchCard extends StatelessWidget {
     );
   }
 
-  void _showUpdateBottomSheet(BuildContext context, Dispatch dispatch) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _UpdateDispatchForm(dispatch: dispatch);
-      },
-    );
+  Map<String, dynamic> _getStatusDetails(String status) {
+    switch (status.toUpperCase()) {
+      case "DELIVERED":
+        return {'icon': Icons.check_circle, 'color': Colors.green};
+      case "PENDING":
+        return {'icon': Icons.pending_actions, 'color': Colors.orange};
+      case "PACKAGING":
+        return {'icon': Icons.all_inbox, 'color': Colors.teal};
+      case "ACCEPTED":
+        return {'icon': Icons.local_shipping, 'color': Colors.blue};
+      case "CANCELLED":
+        return {'icon': Icons.cancel, 'color': Colors.red};
+      default:
+        return {'icon': Icons.help_outline, 'color': Colors.grey};
+    }
+  }
+
+  Map<String, dynamic> _getPaymentDetails(String method) {
+    switch (method.toLowerCase()) {
+      case "cash":
+      case "cash on delivery":
+        return {'text': 'Cash On Delivery', 'icon': Icons.money, 'color': Colors.green};
+      case "wallet":
+        return {'text': 'Wallet', 'icon': Icons.account_balance_wallet, 'color': Colors.blue};
+      default:
+        return {'text': 'Other', 'icon': Icons.payment, 'color': Colors.grey};
+    }
   }
 }
 
-class _UpdateDispatchForm extends StatefulWidget {
-  final Dispatch dispatch;
-  const _UpdateDispatchForm({required this.dispatch});
-
-  @override
-  State<_UpdateDispatchForm> createState() => _UpdateDispatchFormState();
-}
-
-class _UpdateDispatchFormState extends State<_UpdateDispatchForm> {
-  late String _selectedStatus;
-  final TextEditingController _commentController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedStatus = widget.dispatch.status;
-  }
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<DispatchProvider>(context, listen: false);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
-      minChildSize: 0.4,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: bottomInset + 24,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 5),
-            ],
-          ),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              Center(
-                child: Container(
-                  width: 60,
-                  height: 6,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-              Text(
-                'Update Order #${widget.dispatch.orderId}',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                items: ['approved', 'rejected', 'pending']
-                    .map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status[0].toUpperCase() + status.substring(1)),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedStatus = value;
-                    });
-                  }
-                },
-                decoration: const InputDecoration(
-                  labelText: "Update Status",
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _commentController,
-                decoration: const InputDecoration(
-                  labelText: "Comment",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final now = DateTime.now().toIso8601String();
-                  final success = await provider.updateDispatchStatus(
-                    orderId: widget.dispatch.orderId,
-                    status: _selectedStatus,
-                    time: now,
-                    comment: _commentController.text.trim(),
-                  );
-                  if (success && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Status updated successfully")),
-                    );
-                    provider.fetchDispatches(dateFrom: '2025-06-03', dateTo: '2025-06-06');
-                    Navigator.pop(context);
-                  }
-                },
-                icon: const Icon(Icons.save),
-                label: const Text("Update"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}

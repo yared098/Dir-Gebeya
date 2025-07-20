@@ -23,24 +23,25 @@ class LoginProvider extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-     
-    try {
-      final response = await http.post(
-      Uri.parse(ApiConfig.login),
-      headers: {
-        'Content-Type': 'application/json', // 👈 Required for JSON body
-      },
-      body: jsonEncode({ // 👈 Send JSON data
-        'phone':convertToLocalPhone(phone),
-        'password': password,
-      }),
-    );
-      final data = jsonDecode(response.body);
-      print("response"+data.toString());
-     
-      if (response.statusCode == 200 && data['success'] == true) {
-        
 
+    try {
+      final formattedPhone = convertToInternationalPhone(phone);
+      print('Formatted Phone: $formattedPhone');
+      final response = await http.post(
+        Uri.parse(ApiConfig.login),
+        headers: {
+          'Content-Type': 'application/json', // 👈 Required for JSON body
+        },
+        body: jsonEncode({
+          // 👈 Send JSON data
+          'phone': formattedPhone,
+          'password': password,
+        }),
+      );
+      final data = jsonDecode(response.body);
+      print("response" + data.toString());
+
+      if (response.statusCode == 200 && data['success'] == true) {
         _token = data['token'];
         _user = UserModel.fromJson(data['user']);
 
@@ -61,44 +62,43 @@ class LoginProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-       
       _error = 'An error occurred. Please try again./N+${e}';
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  String convertToLocalPhone(String phoneNumber) {
-  if (phoneNumber.startsWith('+251')) {
-    return '0${phoneNumber.substring(4)}';
-  } else if (phoneNumber.startsWith('251')) {
-    return '0${phoneNumber.substring(3)}';
-  } else {
-    return phoneNumber; // return as-is if not international format
-  }
-}
+  String convertToInternationalPhone(String phoneNumber) {
+    // Remove all whitespaces, dashes, etc.
+    phoneNumber = phoneNumber.replaceAll(RegExp(r'\s+|-'), '');
 
-  /// Generate a random fallback token
-  String _generateRandomToken() {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final rand = Random();
-    return List.generate(32, (index) => chars[rand.nextInt(chars.length)]).join();
+    if (phoneNumber.startsWith('+2519')) {
+      return phoneNumber; // already in correct format
+    } else if (phoneNumber.startsWith('2519')) {
+      return '+$phoneNumber'; // add missing +
+    } else if (phoneNumber.startsWith('09')) {
+      return '+251${phoneNumber.substring(1)}'; // strip leading 0 and add +251
+    } else if (phoneNumber.startsWith('9') && phoneNumber.length == 9) {
+      return '+251$phoneNumber'; // already without 0, just add +251
+    } else {
+      // fallback: invalid or unexpected format
+      return phoneNumber;
+    }
   }
 
   Future<void> logoutnew() async {
-  final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
-  // Clear stored token from SharedPreferences
-  await prefs.remove('token');
+    // Clear stored token from SharedPreferences
+    await prefs.remove('token');
 
-  // Reset in-memory token and user
-  _token = null;
-  _user = null;
+    // Reset in-memory token and user
+    _token = null;
+    _user = null;
 
-  // Notify UI that auth state has changed
-  notifyListeners();
-}
-
+    // Notify UI that auth state has changed
+    notifyListeners();
+  }
 
   Future<void> logout() async {
     _token = null;

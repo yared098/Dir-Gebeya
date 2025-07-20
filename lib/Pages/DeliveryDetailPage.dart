@@ -1,24 +1,27 @@
-import 'package:dirgebeya/Model/Product.dart';
+import 'package:dirgebeya/Pages/Widgets/showStatusDialog.dart';
 import 'package:dirgebeya/Provider/order_detail_provider.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
+import 'package:dirgebeya/Provider/dispatch_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class OrderDetailsScreen extends StatefulWidget {
+class DispatchDetailPage extends StatefulWidget {
   final int orderId;
 
-  const OrderDetailsScreen({super.key, required this.orderId});
+  const DispatchDetailPage({super.key, required this.orderId});
 
   @override
-  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+  State<DispatchDetailPage> createState() => _DispatchDetailPageState();
 }
 
-class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+class _DispatchDetailPageState extends State<DispatchDetailPage> {
   @override
   void initState() {
     super.initState();
+
+    // Trigger fetchOrderDetail when the page is opened
     Future.microtask(() {
       final provider = Provider.of<OrderDetailProvider>(context, listen: false);
       provider.fetchOrderDetail(widget.orderId);
@@ -46,19 +49,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            if (order != null) _buildCustomerInfoCard(order,products[0]),
+            const SizedBox(height: 16),
+             if (order != null) _buildBillingCard(order),
+             const SizedBox(height: 16),
+             _buildReasonCard(history),
             if (products.isNotEmpty && order != null)
               _buildProductCard(products[0], order),
             const SizedBox(height: 16),
-            _buildReasonCard(history),
-            const SizedBox(height: 16),
-            if (order != null) _buildBillingCard(order),
-            const SizedBox(height: 16),
-            if (order != null) _buildCustomerInfoCard(order,products[0]),
-            const SizedBox(height: 80),
+            
           ],
         ),
       ),
-     
+      bottomSheet: _buildActionButtons(context,order,products)
     );
   }
 
@@ -74,7 +77,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            'Order# ${order?.id ?? ''}',
+            'Delivery Task ${order?.id ?? ''}',
             style: const TextStyle(
               color: AppColors.primary,
               fontSize: 18,
@@ -93,8 +96,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: CircleAvatar(
-            backgroundColor:AppColors.primary,
-            
+
+            backgroundColor: AppColors.primary,
             child: const Icon(Icons.history, color: Colors.white, size: 24),
           ),
         ),
@@ -275,7 +278,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ),
             const Divider(height: 24),
             _buildBillingRow(
-              'Total Refundable Amount',
+              'Total Receivable Amount',
               '${order.total.toStringAsFixed(2)} ETB',
               isTotal: true,
             ),
@@ -285,36 +288,67 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Widget _buildBillingRow(String label, String amount, {bool isTotal = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isTotal ? Colors.black87 : Colors.grey[600],
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              fontSize: isTotal ? 16 : 14,
+ Widget _buildBillingRow(String label, String amount, {bool isTotal = false}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isTotal ? Colors.black : Colors.grey[700],
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                fontSize: isTotal ? 13 : 12,
+              ),
+            ),
+            Text(
+              amount,
+              style: TextStyle(
+                color: isTotal ? Color(0xFF1D4ED8) : Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: isTotal ? 16 : 14,
+              ),
+            ),
+          ],
+        ),
+        if (isTotal)
+          Container(
+            margin: const EdgeInsets.only(top: 8.0),
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange[800], size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Collect this amount if payment term is Cash on Delivery.",
+                    style: TextStyle(
+                      color: Colors.orange[800],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            amount,
-            style: TextStyle(
-              color: isTotal ? const Color(0xFF1D4ED8) : Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: isTotal ? 16 : 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _buildCustomerInfoCard(Order order, OrderProduct product) {
     return Card(
-      elevation: 1,
+     elevation: 1,
       color: Colors.white,
       shadowColor: Colors.black.withOpacity(0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -329,7 +363,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 Icon(Icons.person, color: Colors.grey),
                 SizedBox(width: 8),
                 Text(
-                  'Customer Information',
+                  'Delivery Information',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -447,5 +481,73 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
- 
+
+Widget _buildActionButtons(BuildContext context, Order? order, List<OrderProduct> products) {
+  final provider = Provider.of<OrderDetailProvider>(context, listen: false);
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 10,
+          offset: const Offset(0, -5),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              showStatusDialog(context, isAccepted: false);
+              // TODO: Add reject API logic if needed
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFEE2E2),
+              foregroundColor: const Color(0xFFDC2626),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Reject', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () async {
+              if (order != null) {
+                final success = await provider.approveOrder(order.id);
+                if (success) {
+                  showStatusDialog(context, isAccepted: true);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(provider.error ?? "Approval failed")),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Approve', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
 }

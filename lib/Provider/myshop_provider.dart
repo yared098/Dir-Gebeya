@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
@@ -86,4 +87,58 @@ class MyShopProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  Future<bool> updateShopDetails({
+  required String name,
+  required String contact,
+  required String address,
+   File? storeProfilePhoto,
+}) async {
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = "Unauthorized";
+    notifyListeners();
+    return false;
+  }
+
+  final url = Uri.parse('${ApiConfig.baseUrl}/shop_api');
+
+  final body = {
+    "store_name": name,
+    "store_contact_number": contact,
+    "store_address": address,
+    "store_meta": {
+      "cover_text_color": _shop?.coverTextColor ?? "#000000",
+      "cover_show_vendor_name": _shop?.coverShowVendorName == true ? 1 : 0,
+    },
+    "store_profile_photo": null,
+    "total_balance": _shop?.totalBalance ?? 0,
+    "total_products": _shop?.totalProducts ?? 0,
+  };
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      await fetchShopDetails(); // refresh UI
+      return true;
+    } else {
+      _error = "Failed to update (${response.statusCode})";
+      notifyListeners();
+      return false;
+    }
+  } catch (e) {
+    _error = "Update error: $e";
+    notifyListeners();
+    return false;
+  }
+}
+
 }

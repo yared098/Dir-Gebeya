@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:dirgebeya/Provider/profile_provider.dart';
 import 'package:dirgebeya/config/api_config.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class MyProfileScreen extends StatefulWidget {
@@ -86,55 +89,72 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
           Positioned(right: -30, top: -20, child: Text("")),
           Row(
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white,
-                child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: const Color(0xFFE0E7FF),
-                  child: user.avatar.isNotEmpty
-                      // ? ClipOval(
-                      //     child: Image.network(
-                      //       "https://direthiopia.com/assets/images/users/${user.avatar}",
-                      //       fit: BoxFit.cover,
-                      //       width: 56,
-                      //       height: 56,
-                      //       errorBuilder: (context, error, stackTrace) {
-                      //         return Image.asset(
-                      //           'assets/image/logo.png',
-                      //           fit: BoxFit.cover,
-                      //           width: 56,
-                      //           height: 56,
-                      //         );
-                      //       },
-                      //     ),
-                      //   )
-                      ? ClipOval(
-                          child: Image.network(
-                            'https://direthiopia.com/assets/images/users/${user.avatar ?? 'default.jpg'}',
-                            fit: BoxFit.cover,
-                            width: 56,
-                            height: 56,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Image.asset(
-                                'assets/image/logo.png',
-                                fit: BoxFit.cover,
-                                width: 56,
-                                height: 56,
-                              );
-                            },
-                          ),
-                        )
-                      : Text(
-                          user.firstName.isNotEmpty
-                              ? user.firstName[0].toUpperCase()
-                              : '',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1D4ED8),
+            
+              GestureDetector(
+                onTap: () async {
+                  
+                  final picker = ImagePicker();
+                  final picked = await picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (picked != null) {
+                    final file = File(picked.path);
+                    final success = await Provider.of<ProfileProvider>(
+                      context,
+                      listen: false,
+                    ).uploadProfileImage(file);
+
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Profile picture updated"),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Failed to update: ${Provider.of<ProfileProvider>(context, listen: false).error}",
                           ),
                         ),
+                      );
+                    }
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 28,
+                    backgroundColor: const Color(0xFFE0E7FF),
+                    child: user.avatar.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              'https://direthiopia.com/assets/images/users/${user.avatar}',
+                              fit: BoxFit.cover,
+                              width: 56,
+                              height: 56,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Image.asset(
+                                  'assets/image/logo.png',
+                                  fit: BoxFit.cover,
+                                  width: 56,
+                                  height: 56,
+                                );
+                              },
+                            ),
+                          )
+                        : Text(
+                            user.firstName.isNotEmpty
+                                ? user.firstName[0].toUpperCase()
+                                : '',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1D4ED8),
+                            ),
+                          ),
+                  ),
                 ),
               ),
 
