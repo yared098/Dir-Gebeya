@@ -206,4 +206,57 @@ class WalletProvider extends ChangeNotifier {
       return false;
     }
   }
+  Future<bool> createWithdraw({
+  required String tranIds,
+  required String total,
+  required String preferMethod,
+  required String settings,
+  required String createdTime,
+}) async {
+  _error = null;
+
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = 'Missing auth token';
+    notifyListeners();
+    return false;
+  }
+
+  final url = Uri.parse('${ApiConfig.baseUrl}/wallet_api?action=withdrawal');
+
+  final body = {
+    'tran_ids': tranIds,
+    'total': total,
+    'prefer_method': preferMethod,
+    'settings': settings,
+    'created_time': createdTime,
+  };
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      debugPrint("Withdrawal Created: ${response.body}");
+      return true;
+    } else {
+      _error = 'Failed to create withdrawal: ${response.statusCode}';
+      debugPrint(_error!);
+      notifyListeners();
+      return false;
+    }
+  } catch (e) {
+    _error = 'Error: $e';
+    debugPrint(_error!);
+    notifyListeners();
+    return false;
+  }
+}
+
 }

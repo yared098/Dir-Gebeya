@@ -133,20 +133,14 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                      ),
-                      builder: (context) {
-                        return RecentCallsContent(
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecentCallsContent(
                           message: message,
                           shareLink: shareLink,
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
                 ),

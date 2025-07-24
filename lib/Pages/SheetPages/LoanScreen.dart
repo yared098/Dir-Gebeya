@@ -26,6 +26,9 @@ class _LoanScreenState extends State<LoanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Consumer<LoanProvider>(
       builder: (context, loadProvider, _) {
         final isLoading = loadProvider.isLoading;
@@ -38,26 +41,22 @@ class _LoanScreenState extends State<LoanScreen> {
         final filteredTransactions = selectedStatus == 'all'
             ? mappedTransactions
             : mappedTransactions.where((tx) {
-                final statusString = tx.status
-                    .toString()
-                    .split('.')
-                    .last
-                    .toLowerCase();
+                final statusString = tx.status.toString().split('.').last.toLowerCase();
                 return statusString == selectedStatus;
               }).toList();
 
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: theme.appBarTheme.backgroundColor,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
+              icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text(
+            title: Text(
               'Loans',
               style: TextStyle(
-                color: Colors.black,
+                color: theme.textTheme.titleLarge?.color,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -66,7 +65,7 @@ class _LoanScreenState extends State<LoanScreen> {
           ),
           body: Column(
             children: [
-              _buildFilterChips(),
+              _buildFilterChips(context),
               if (isLoading)
                 const Expanded(
                   child: Center(child: CircularProgressIndicator()),
@@ -98,9 +97,11 @@ class _LoanScreenState extends State<LoanScreen> {
   }
 
   /// Filter chips UI
-  Widget _buildFilterChips() {
+ Widget _buildFilterChips(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
-      color: Colors.white,
+      color: theme.cardColor,
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: SizedBox(
         height: 40,
@@ -116,26 +117,21 @@ class _LoanScreenState extends State<LoanScreen> {
                 label: Text(_filters[index]),
                 selected: isSelected,
                 onSelected: (bool selected) {
-                  if (selected) {
-                    setState(() {
-                      _selectedFilterIndex = index;
-                    });
-                  }
+                  if (selected) setState(() => _selectedFilterIndex = index);
                 },
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black54,
+                  color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w600,
                 ),
-                selectedColor: Theme.of(context).primaryColor,
-                backgroundColor: const Color(0xFFF3F4F6),
+                selectedColor: theme.primaryColor,
+                backgroundColor: theme.brightness == Brightness.dark
+                    ? Colors.grey.shade800
+                    : const Color(0xFFF3F4F6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Colors.transparent),
+                  side: BorderSide(color: Colors.transparent),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
             );
           },
@@ -143,7 +139,6 @@ class _LoanScreenState extends State<LoanScreen> {
       ),
     );
   }
-
   /// Convert Loan to Transaction with computed status
   List<Transaction> _mapLoansToTransactions(List loans) {
     return loans.map<Transaction>((loan) {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
 
@@ -55,58 +56,59 @@ class DispatchProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Dispatch> get dispatches => _dispatches;
+Future<void> fetchDispatches({
+  String status = 'assigned',
+}) async {
+  _isLoading = true;
+  _error = null;
+  notifyListeners();
 
-  Future<void> fetchDispatches({
-    String status = 'assigned',
-    required String dateFrom,
-    required String dateTo,
-  }) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    final token = await TokenStorage.getToken();
-    if (token == null) {
-      _error = 'Missing token';
-      _isLoading = false;
-      notifyListeners();
-      return;
-    }
-    
-
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}/dispatcher?action=list&status=$status&date_from=$dateFrom&date_to=$dateTo',
-    );
-
-    try {
-      final response = await http.get(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data is List && data.isNotEmpty) {
-          _dispatches = data.map((e) => Dispatch.fromJson(e)).toList();
-        } else {
-          // empty or invalid list → use mock
-          _dispatches = _getMockDispatches();
-        }
-      } else {
-        // non-200 → error + mock
-        _error = "Failed to fetch dispatch list (${response.statusCode})";
-        _dispatches = _getMockDispatches();
-      }
-    } catch (e) {
-      // exception → error + mock
-      _error = "Error: $e";
-      _dispatches = _getMockDispatches();
-    }
-
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = 'Missing token';
     _isLoading = false;
     notifyListeners();
+    return;
   }
+
+  // Format dates as yyyy-MM-dd
+  final DateFormat formatter = DateFormat('yyyy-MM-dd');
+  final DateTime now = DateTime.now();
+  final String dateTo = formatter.format(now);
+  final String dateFrom = formatter.format(now.subtract(Duration(days: 100)));
+
+  final url = Uri.parse(
+    '${ApiConfig.baseUrl}/dispatcher?action=list&status=$status&date_from=$dateFrom&date_to=$dateTo',
+  );
+
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("disp: $data");
+
+      if (data is List && data.isNotEmpty) {
+        _dispatches = data.map((e) => Dispatch.fromJson(e)).toList();
+      } else {
+        _dispatches = _getMockDispatches();
+      }
+    } else {
+      _error = "Failed to fetch dispatch list (${response.statusCode})";
+      _dispatches = _getMockDispatches();
+    }
+  } catch (e) {
+    _error = "Error: $e";
+    _dispatches = _getMockDispatches();
+  }
+
+  _isLoading = false;
+  notifyListeners();
+}
 
   List<Dispatch> _getMockDispatches() {
     return [

@@ -18,7 +18,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _handleLogout(BuildContext context) async {
     setState(() => _isLoggingOut = true);
 
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final profileProvider = Provider.of<ProfileProvider>(
+      context,
+      listen: false,
+    );
     final success = await profileProvider.logout();
 
     if (success) {
@@ -38,7 +41,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _buildSettingTile({required IconData icon, required String title, Widget? trailing}) {
+  Widget _buildSettingTile({
+    required IconData icon,
+    required String title,
+    Widget? trailing,
+  }) {
     return Card(
       elevation: 1,
       color: Theme.of(context).cardColor,
@@ -60,12 +67,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Scaffold(
           appBar: AppBar(
-            title: const Text("Settings", style: TextStyle(color: Colors.black)),
-            backgroundColor: Colors.white,
+            title: Text(
+              "Settings",
+              style: TextStyle(
+                color: Theme.of(context).appBarTheme.foregroundColor,
+              ),
+            ),
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             centerTitle: true,
             elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.black),
+            iconTheme: Theme.of(context).iconTheme,
           ),
+
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -77,20 +90,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.notifications_none,
                 title: "Notifications",
               ),
-              Card(
-                elevation: 1,
-                color: Theme.of(context).cardColor,
-                shadowColor: Colors.black.withOpacity(0.05),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  leading: const Icon(Icons.dark_mode_outlined, color: Colors.blue),
-                  title: const Text("Dark Mode", style: TextStyle(fontWeight: FontWeight.w600)),
-                  trailing: Switch(
-                    value: themeProvider.isDarkMode,
-                    onChanged: themeProvider.toggleTheme,
-                  ),
-                ),
-              ),
+              // Card(
+              //   elevation: 1,
+              //   color: Theme.of(context).cardColor,
+              //   shadowColor: Colors.black.withOpacity(0.05),
+              //   shape: RoundedRectangleBorder(
+              //     borderRadius: BorderRadius.circular(12),
+              //   ),
+              //   child: ListTile(
+              //     leading: const Icon(
+              //       Icons.dark_mode_outlined,
+              //       color: Colors.blue,
+              //     ),
+              //     title: const Text(
+              //       "Dark Mode",
+              //       style: TextStyle(fontWeight: FontWeight.w600),
+              //     ),
+              //     trailing: Switch(
+              //       value: themeProvider.isDarkMode,
+              //       onChanged: themeProvider.toggleTheme,
+              //     ),
+              //   ),
+              // ),
+              
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _isLoggingOut ? null : () => _handleLogout(context),
@@ -99,7 +121,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   foregroundColor: Colors.red,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 icon: const Icon(Icons.logout),
                 label: const Text('Logout'),

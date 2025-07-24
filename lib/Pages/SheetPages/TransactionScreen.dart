@@ -22,7 +22,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Transactions"),
+        title: const Text("Transactionss"),
         centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -57,6 +57,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget _transactionCard(Transaction tx) {
   final Color statusColor = _statusColor(tx.status);
   final IconData statusIcon = _statusIcon(tx.status);
+    final statusText = _mapStatusCodeToText(tx.status);
+
 
   return Card(
     elevation: 1,
@@ -117,19 +119,19 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
           // Status Row
           Row(
-            children: [
-              Icon(statusIcon, color: statusColor, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                tx.status.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+          children: [
+            Icon(statusIcon, color: statusColor, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              statusText.toUpperCase(),
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
 
           const SizedBox(height: 10),
 
@@ -167,34 +169,73 @@ class _TransactionScreenState extends State<TransactionScreen> {
   );
 }
 
-Color _statusColor(String status) {
-  switch (status.toLowerCase()) {
-    case 'paid':
-      return Colors.green;
-    case 'due':
-      return Colors.orange;
-    case 'upcoming':
-    case 'upcaming': // in case of a typo
-      return Colors.blueGrey;
-    case 'failed':
-      return Colors.redAccent;
-    default:
-      return Colors.grey;
+
+String _mapStatusCodeToText(String statusCode) {
+  switch (statusCode) {
+    case '0': return "Waiting For Payment";
+    case '1': return "Complete";
+    case '2': return "Total not match";
+    case '3': return "Denied";
+    case '4': return "Expired";
+    case '5': return "Failed";
+    case '6': return "Pending";
+    case '7': return "Processed";
+    case '8': return "Refunded";
+    case '9': return "Reversed";
+    case '10': return "Voided";
+    case '11': return "Canceled Reversal";
+    case '12': return "Waiting For Payment";
+    default: return "Unknown";
   }
 }
 
-
-IconData _statusIcon(String status) {
-  switch (status.toLowerCase()) {
-    case 'paid':
+IconData _statusIcon(String statusCode) {
+  switch (statusCode) {
+    case '1': // Complete
       return Icons.check_circle_outline;
-    case 'due':
+    case '2': // Total not match
       return Icons.error_outline;
-    case 'upcoming':
-    case 'upcaming': // fallback typo
-      return Icons.access_time;
+    case '3': // Denied
+      return Icons.block;
+    case '4': // Expired
+      return Icons.hourglass_disabled;
+    case '0': // Waiting for payment
+      return Icons.hourglass_bottom;
+    case '5': // Failed
+      return Icons.cancel_outlined;
+    case '6': // Pending
+      return Icons.pending_actions;
+    case '7': // Processed
+      return Icons.sync;
+    case '8': // Refunded
+      return Icons.reply;
     default:
       return Icons.info_outline;
+  }
+}
+
+Color _statusColor(String statusCode) {
+  switch (statusCode) {
+    case '1': // Complete
+      return Colors.green.shade700;
+    case '2': // Total not match
+      return Colors.orange.shade700;
+    case '3': // Denied
+      return Colors.red.shade700;
+    case '4': // Expired
+      return Colors.grey.shade600;
+    case '0': // Waiting for payment
+      return Colors.blue.shade700;
+    case '5': // Failed
+      return Colors.redAccent;
+    case '6': // Pending
+      return Colors.blueGrey;
+    case '7': // Processed
+      return Colors.teal;
+    case '8': // Refunded
+      return Colors.purple;
+    default:
+      return Colors.grey;
   }
 }
 

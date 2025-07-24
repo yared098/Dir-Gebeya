@@ -138,7 +138,8 @@ Future<void> fetchTopProducts() async {
     notifyListeners();
   }
 
-  Future<bool> updateProduct({
+
+ Future<bool> updateProduct({
   required int productId,
   required String name,
   required String price,
@@ -162,19 +163,18 @@ Future<void> fetchTopProducts() async {
 
     if (imageFile != null) {
       final mimeType = lookupMimeType(imageFile.path)?.split('/') ?? ['image', 'jpeg'];
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-          contentType: MediaType(mimeType[0], mimeType[1]),
-        ),
-      );
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        imageFile.path,
+        contentType: MediaType(mimeType[0], mimeType[1]),
+      ));
     }
 
     final response = await request.send();
+    print(response.toString());
 
     if (response.statusCode == 200) {
-      await fetchTopProducts(); // refresh updated list
+      await fetchTopProducts(); // Optionally refresh data
       return true;
     } else {
       _error = "Failed to update product (${response.statusCode})";

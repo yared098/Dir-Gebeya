@@ -54,14 +54,17 @@ class _RequestPageState extends State<RequestPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColors.primary;
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = Theme.of(context).textTheme.bodyLarge!.color;
 
     return Scaffold(
       appBar: AppBar(
-        title:  Text('Submit Request',style: TextStyle(color: Colors.white),),
+        title: const Text('Submit Request'),
         centerTitle: true,
-        foregroundColor: Colors.white,
         backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -72,7 +75,7 @@ class _RequestPageState extends State<RequestPage> {
               // National ID
               TextFormField(
                 controller: _nationalIdController,
-                decoration: _inputDecoration("National ID"),
+                decoration: _inputDecoration("National ID", isDark),
                 validator: (value) =>
                     value!.isEmpty ? 'National ID is required' : null,
               ),
@@ -81,7 +84,7 @@ class _RequestPageState extends State<RequestPage> {
               // Car Lib Number
               TextFormField(
                 controller: _carLibNumberController,
-                decoration: _inputDecoration("Car Library Number"),
+                decoration: _inputDecoration("Car Library Number", isDark),
                 validator: (value) =>
                     value!.isEmpty ? 'Car Library Number is required' : null,
               ),
@@ -90,8 +93,8 @@ class _RequestPageState extends State<RequestPage> {
               // Camera Button
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade100,
-                  foregroundColor: Colors.black87,
+                  backgroundColor: isDark ? Colors.grey[800] : Colors.grey.shade100,
+                  foregroundColor: isDark ? Colors.white : Colors.black87,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -124,22 +127,26 @@ class _RequestPageState extends State<RequestPage> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade300),
+                    color: isDark ? Colors.grey[900] : Colors.grey[100],
                   ),
-                  child: const Text(
+                  child: Text(
                     'No image selected',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Colors.grey.shade500),
                   ),
                 ),
 
               const SizedBox(height: 24),
 
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.fingerprint, color: Colors.grey),
-                  SizedBox(width: 8),
+                  Icon(Icons.fingerprint, color: Colors.grey.shade500),
+                  const SizedBox(width: 8),
                   Text(
                     "Fingerprint Scan Placeholder ✅",
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textColor?.withOpacity(0.6),
+                    ),
                   ),
                 ],
               ),
@@ -151,6 +158,7 @@ class _RequestPageState extends State<RequestPage> {
                   showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
+                      backgroundColor: cardColor,
                       title: const Text("Terms & Conditions"),
                       content: const Text(
                         "By submitting, you accept all terms and conditions.",
@@ -188,7 +196,11 @@ class _RequestPageState extends State<RequestPage> {
                   ),
                   child: const Text(
                     "Submit Request",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               )
@@ -199,11 +211,11 @@ class _RequestPageState extends State<RequestPage> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
+  InputDecoration _inputDecoration(String label, bool isDark) {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: isDark ? Colors.grey[900] : Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -213,6 +225,7 @@ class _RequestPageState extends State<RequestPage> {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
+      labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
     );
   }
 }

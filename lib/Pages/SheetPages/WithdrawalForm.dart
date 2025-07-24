@@ -1,4 +1,6 @@
+import 'package:dirgebeya/Provider/wallet_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class WithdrawalForm extends StatefulWidget {
   const WithdrawalForm({super.key});
@@ -13,6 +15,8 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
+  String _twoDigits(int n) => n.toString().padLeft(2, '0');
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -38,13 +42,21 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
             // Dropdown for card selection
             DropdownButtonFormField<String>(
               value: _selectedCard,
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.black54,
+              ),
               decoration: const InputDecoration(),
               items: ['Visionfund', 'Hibret Bank']
-                  .map((label) => DropdownMenuItem(
-                        value: label,
-                        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      ))
+                  .map(
+                    (label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(
+                        label,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -57,19 +69,15 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
             // Text field for name
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                hintText: 'Enter Name',
-              ),
+              decoration: const InputDecoration(hintText: 'Enter Name'),
             ),
             const SizedBox(height: 16),
-            
+
             // Text field for card number
             TextField(
               controller: _cardNumberController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'Card Number',
-              ),
+              decoration: const InputDecoration(hintText: 'Card Number'),
             ),
             const SizedBox(height: 32),
 
@@ -86,9 +94,7 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'Ex: 500 ETB',
-              ),
+              decoration: const InputDecoration(hintText: 'Ex: 500 ETB'),
             ),
             const SizedBox(height: 24),
 
@@ -100,10 +106,70 @@ class _WithdrawalFormState extends State<WithdrawalForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Example debug print
-                  debugPrint("Withdraw: Card=$_selectedCard, Name=${_nameController.text}, Card#=${_cardNumberController.text}, Amount=${_amountController.text}");
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        final name = _nameController.text.trim();
+                        final cardNumber = _cardNumberController.text.trim();
+                        final amount = _amountController.text.trim();
+                        final method = _selectedCard ?? 'Visionfund';
+
+                        if (name.isEmpty ||
+                            cardNumber.isEmpty ||
+                            amount.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fill all fields'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        setState(() => _isLoading = true); // Start loading
+
+                        final now = DateTime.now();
+                        final formattedTime =
+                            '${now.year}-${_twoDigits(now.month)}-${_twoDigits(now.day)} '
+                            '${_twoDigits(now.hour)}-${_twoDigits(now.minute)}-${_twoDigits(now.second)}';
+
+                        final success =
+                            await Provider.of<WalletProvider>(
+                              context,
+                              listen: false,
+                            ).sendWithdrawalRequest(
+                              tranIds: "292",
+                              total: amount,
+                              preferMethod: "$method Acc",
+                              settings: cardNumber,
+                              createdTime: formattedTime,
+                            );
+
+                        setState(() => _isLoading = false); // Stop loading
+
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Withdrawal request submitted successfully',
+                              ),
+                            ),
+                          );
+                          Navigator.pop(context);
+                        } else {
+                          final error =
+                              Provider.of<WalletProvider>(
+                                context,
+                                listen: false,
+                              ).error ??
+                              "Unknown error";
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Withdrawal failed: $error'),
+                            ),
+                          );
+                        }
+                      },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.primaryColor,
                   foregroundColor: Colors.white,
@@ -148,9 +214,7 @@ class DashedDivider extends StatelessWidget {
             return SizedBox(
               width: dashWidth,
               height: dashHeight,
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: color),
-              ),
+              child: DecoratedBox(decoration: BoxDecoration(color: color)),
             );
           }),
         );

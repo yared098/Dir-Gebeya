@@ -6,7 +6,7 @@ plugins {
 }
 android {
     namespace = "com.example.telephony" // or the actual package name of telephony
-    namespace = "com.example.dirgebeya"
+    namespace = "com.dirgebeya.driver"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.dirgebeya"
+        applicationId = "com.dirgebeya.driver"
         minSdk = 21
         targetSdk = 33
         versionCode = flutter.versionCode

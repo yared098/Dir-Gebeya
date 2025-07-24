@@ -134,6 +134,7 @@ class _DashboardScreenState extends State<HomePage> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Container(
+        margin: const EdgeInsets.only(top: 13), // 👈 Add this line
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         color:
             Theme.of(context).appBarTheme.backgroundColor ??
@@ -337,18 +338,21 @@ class _DashboardScreenState extends State<HomePage> {
   }
 
  Widget _buildRowCards(Map<String, dynamic>? earningsData) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
     child: Container(
       decoration: BoxDecoration(
-        color: Colors.white, // Light background
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
         ],
       ),
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -360,7 +364,7 @@ class _DashboardScreenState extends State<HomePage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 16),
@@ -454,64 +458,7 @@ class _DashboardScreenState extends State<HomePage> {
   );
 }
 
-  // void _showInfoDialog(BuildContext context, String title, String value, IconData icon) {
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     builder: (BuildContext context) {
-  //       return Dialog(
-  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-  //         backgroundColor: Colors.white,
-  //         child: Padding(
-  //           padding: const EdgeInsets.all(20),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               Align(
-  //                 alignment: Alignment.topRight,
-  //                 child: GestureDetector(
-  //                   onTap: () => Navigator.pop(context),
-  //                   child: const Icon(Icons.close, color: Colors.black54),
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 10),
-  //               CircleAvatar(
-  //                 radius: 30,
-  //                 backgroundColor: AppColors.primary.withOpacity(0.1),
-  //                 child: Icon(
-  //                   icon,
-  //                   color: AppColors.primary,
-  //                   size: 32,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 16),
-  //               Text(
-  //                 title,
-  //                 style: const TextStyle(
-  //                   fontSize: 18,
-  //                   fontWeight: FontWeight.bold,
-  //                   color: Colors.black87,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 8),
-  //               Text(
-  //                 value,
-  //                 style: TextStyle(
-  //                   fontSize: 20,
-  //                   fontWeight: FontWeight.w600,
-  //                   color: AppColors.primary,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 20),
-
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
+ 
   void _showInfoDialog(
     BuildContext context,
     String title,
@@ -676,60 +623,7 @@ class _DashboardScreenState extends State<HomePage> {
     );
   }
 
-  // Helper to build a single card in the ongoing orders grid.
-  // Widget _buildOrderCard({
-  //   required String count,
-  //   required String label,
-  //   required Color color,
-  //   required Color lightColor,
-  // }) {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       color: color,
-  //       borderRadius: BorderRadius.circular(12),
-  //     ),
-  //     child: Stack(
-  //       clipBehavior: Clip.hardEdge,
-  //       children: [
-  //         Positioned(
-  //           right: -20,
-  //           top: -20,
-  //           child: Container(
-  //             width: 100,
-  //             height: 100,
-  //             decoration: BoxDecoration(
-  //               color: lightColor.withOpacity(0.5),
-  //               shape: BoxShape.circle,
-  //             ),
-  //           ),
-  //         ),
-  //         Padding(
-  //           padding: const EdgeInsets.all(16.0),
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               Text(
-  //                 count,
-  //                 style: const TextStyle(
-  //                   color: Colors.white,
-  //                   fontSize: 35,
-  //                   fontWeight: FontWeight.bold,
-  //                 ),
-  //               ),
-  //               const Spacer(),
-  //               Text(
-  //                 label,
-  //                 style: const TextStyle(color: Colors.white, fontSize: 14),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
+  
   Widget _buildOrderCard({
     required String count,
     required String label,

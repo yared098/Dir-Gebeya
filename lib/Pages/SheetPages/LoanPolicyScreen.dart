@@ -32,12 +32,17 @@ class _LoanPolicyScreenState extends State<LoanPolicyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text("Loan Policy", style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(
+          "Loan Policy",
+          style: TextStyle(color: theme.textTheme.titleLarge?.color),
+        ),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        iconTheme: IconThemeData(color: theme.iconTheme.color),
         elevation: 0,
         centerTitle: true,
       ),
@@ -45,8 +50,8 @@ class _LoanPolicyScreenState extends State<LoanPolicyScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Card(
           elevation: 1,
-          color: Colors.white,
-          shadowColor: Colors.black.withOpacity(0.05),
+          color: theme.cardColor,
+          shadowColor: isDark ? Colors.white12 : Colors.black12,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -59,12 +64,12 @@ class _LoanPolicyScreenState extends State<LoanPolicyScreen> {
                       controller: _scrollController,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             "Business Loan Policy",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
                             """
 1. Introduction
@@ -97,12 +102,12 @@ All loan application data is treated as confidential and will not be shared with
 10. Amendments
 This loan policy may be revised at any time. Businesses will be notified of updates through email or platform notification.
                             """,
-                            style: TextStyle(height: 1.5, color: Colors.black87),
+                            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
                           ),
-                          SizedBox(height: 24),
+                          const SizedBox(height: 24),
                           Text(
                             "For any questions regarding loans, please contact our support team.",
-                            style: TextStyle(fontWeight: FontWeight.w500),
+                            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                           )
                         ],
                       ),
@@ -117,7 +122,7 @@ This loan policy may be revised at any time. Businesses will be notified of upda
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(

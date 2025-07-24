@@ -24,6 +24,7 @@ import 'package:dirgebeya/Provider/dashboard_provider.dart';
 import 'package:dirgebeya/Provider/dispatch_provider.dart';
 import 'package:dirgebeya/Provider/loan_provider.dart';
 import 'package:dirgebeya/Provider/login_provider.dart';
+import 'package:dirgebeya/Provider/messages_provider.dart';
 import 'package:dirgebeya/Provider/myshop_provider.dart';
 import 'package:dirgebeya/Provider/order_detail_provider.dart';
 import 'package:dirgebeya/Provider/order_provider.dart.dart';
@@ -78,7 +79,8 @@ void main() async {
         // reuest provider
         ChangeNotifierProvider(create: (_) => RequestProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_)=>TransactionProvider())
+        ChangeNotifierProvider(create: (_)=>TransactionProvider()),
+        ChangeNotifierProvider(create: (_)=>MessagesProvider())
       ],
       child: const MyApp(),
     ),
@@ -109,7 +111,7 @@ class MyApp extends StatelessWidget {
             '/transaction': (context) => TransactionScreen(),
             '/loan': (context) => LoanScreen(),
             '/messages': (context) => MessagesScreen(),
-            '/bank-info': (context) => BankInfoScreen(),
+            '/bank-info': (context) => BankInfoForm(),
             '/terms': (context) => TermsAndConditionsScreen(),
             '/loan-policy': (context) => LoanPolicyScreen(),
             '/request': (context) => RequestPage(),

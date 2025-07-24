@@ -43,7 +43,7 @@ class _RefundScreenState extends State<RefundScreen> {
       Provider.of<DispatchProvider>(
         context,
         listen: false,
-      ).fetchDispatches(dateFrom: '2025-06-03', dateTo: '2025-06-06');
+      ).fetchDispatches();
     });
   }
 
@@ -335,7 +335,8 @@ class DispatchCard extends StatelessWidget {
         );
       },
       child: Card(
-        elevation: 2,
+        color: Colors.white,
+        shadowColor: Theme.of(context).shadowColor.withOpacity(0.1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Padding(
@@ -359,7 +360,10 @@ class DispatchCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(dispatch.assignedTime ?? '', style: const TextStyle(color: Colors.grey)),
+              Text(
+                dispatch.assignedTime ?? '',
+                style: const TextStyle(color: Colors.grey),
+              ),
               const SizedBox(height: 12),
               // Status & Payment Row
               Row(
@@ -439,12 +443,19 @@ class DispatchCard extends StatelessWidget {
     switch (method.toLowerCase()) {
       case "cash":
       case "cash on delivery":
-        return {'text': 'Cash On Delivery', 'icon': Icons.money, 'color': Colors.green};
+        return {
+          'text': 'Cash On Delivery',
+          'icon': Icons.money,
+          'color': Colors.green,
+        };
       case "wallet":
-        return {'text': 'Wallet', 'icon': Icons.account_balance_wallet, 'color': Colors.blue};
+        return {
+          'text': 'Wallet',
+          'icon': Icons.account_balance_wallet,
+          'color': Colors.blue,
+        };
       default:
         return {'text': 'Other', 'icon': Icons.payment, 'color': Colors.grey};
     }
   }
 }
-

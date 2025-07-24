@@ -37,8 +37,9 @@ class BankingProvider extends ChangeNotifier {
       return;
     }
 
-    final url = Uri.parse('${ApiConfig.baseUrl}/profile_api'); // Adjust API URL
+    final url = Uri.parse('https://direthiopia.com/api/v3/seller/add_payment'); // Adjust API URL
     print("url_bank"+url.toString());
+    print("bank_token"+token);
     try {
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $token',
@@ -63,4 +64,59 @@ class BankingProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  Future<bool> addPaymentDetails({
+  required String bankName,
+  required String accountNumber,
+  required String accountName,
+  required String ifscCode,
+  required String branch,
+}) async {
+  _isLoading = true;
+  _error = null;
+  _success = false;
+  notifyListeners();
+
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = 'Missing auth token';
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  final url = Uri.parse('https://direthiopia.com/api/v3/seller/add_payment');
+  final body = jsonEncode({
+    'bank_name': bankName,
+    'account_number': accountNumber,
+    'account_name': accountName,
+    // 'ifsc_code': ifscCode,
+    'branch': branch,
+    // 'status': '1',
+  });
+
+  try {
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: body);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      _success = true;
+      notifyListeners();
+      return true;
+    } else {
+      _error = 'Failed to submit bank info: ${response.statusCode}';
+    }
+  } catch (e) {
+    _error = 'Error: $e';
+  }
+
+  _isLoading = false;
+  notifyListeners();
+  return false;
+}
+
 }

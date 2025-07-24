@@ -486,68 +486,74 @@ Widget _buildActionButtons(BuildContext context, Order? order, List<OrderProduct
   final provider = Provider.of<OrderDetailProvider>(context, listen: false);
 
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 10,
-          offset: const Offset(0, -5),
+    // margin: const EdgeInsets.all(12),
+    padding: const EdgeInsets.all(16),
+    
+    child: SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.check_circle, size: 20),
+        label: const Text(
+          'Finish',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-      ],
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              showStatusDialog(context, isAccepted: false);
-              // TODO: Add reject API logic if needed
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFEE2E2),
-              foregroundColor: const Color(0xFFDC2626),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Reject', style: TextStyle(fontSize: 16)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () async {
-              if (order != null) {
-                final success = await provider.approveOrder(order.id);
-                if (success) {
-                  showStatusDialog(context, isAccepted: true);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(provider.error ?? "Approval failed")),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
-            child: const Text('Approve', style: TextStyle(fontSize: 16)),
-          ),
-        ),
-      ],
+            builder: (ctx) {
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.check, color: Colors.green),
+                      title: const Text('Approve'),
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        if (order != null) {
+                          final success = await provider.approveOrder(order.id);
+                          if (success) {
+                            showStatusDialog(context, isAccepted: true);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(provider.error ?? "Approval failed")),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.close, color: Colors.red),
+                      title: const Text('Reject'),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        showStatusDialog(context, isAccepted: false);
+                        // TODO: Add reject logic here
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
     ),
   );
 }
-
 
 }

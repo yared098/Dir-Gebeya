@@ -1,11 +1,14 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dirgebeya/Model/Product.dart';
 import 'package:dirgebeya/Pages/SheetPages/ProductDetailsScreen.dart';
+import 'package:dirgebeya/Provider/dashboard_provider.dart';
 import 'package:dirgebeya/Provider/products_provider.dart';
 import 'package:dirgebeya/utils/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -164,7 +167,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 }
 
-// --- REUSABLE PRODUCT LIST ITEM WIDGET ---
 
 
 class ProductListItem extends StatefulWidget {
@@ -329,6 +331,7 @@ class _ProductListItemState extends State<ProductListItem> {
             builder: (context) {
               return InkWell(
                 onTap: () {
+                  _showActionMenu(context);
                   // Your existing _showActionMenu logic or replace here
                 },
                 customBorder: const CircleBorder(),
@@ -354,4 +357,168 @@ class _ProductListItemState extends State<ProductListItem> {
       ),
     );
   }
+
+  void _showActionMenu(BuildContext context) {
+  final RenderBox renderBox = context.findRenderObject() as RenderBox;
+  final position = renderBox.localToGlobal(Offset.zero);
+
+  showMenu(
+    context: context,
+    position: RelativeRect.fromLTRB(
+        position.dx - 220, position.dy + 40, position.dx, position.dy),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+    color: Colors.white,
+    elevation: 4,
+    items: [
+      PopupMenuItem(
+        enabled: false,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildMenuIcon(Icons.delete_outline, Colors.red, () {
+              Navigator.pop(context);
+              // TODO: Handle delete
+            }),
+            _buildMenuIcon(Icons.qr_code_scanner, Colors.blue, () {
+              Navigator.pop(context);
+              // TODO: Handle scan
+            }),
+           _buildMenuIcon(Icons.edit_outlined, Colors.blue, () {
+  Navigator.pop(context);
+  _showEditBottomSheet(context, widget.product);
+}),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => Navigator.pop(context),
+              child: const Icon(Icons.close, color: Colors.grey, size: 20),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildMenuIcon(IconData icon, Color color, VoidCallback onPressed) {
+  return IconButton(
+    icon: Icon(icon, color: color, size: 22),
+    onPressed: onPressed,
+    splashRadius: 20,
+  );
+}
+
+void _showEditBottomSheet(BuildContext context, Product product) {
+  final _nameController = TextEditingController(text: product.name);
+  final _priceController = TextEditingController(text: product.price.toString());
+  File? _pickedImage;
+  bool _isUpdating = false;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          Future<void> _pickImage() async {
+            final picker = ImagePicker();
+            final picked = await picker.pickImage(source: ImageSource.gallery);
+            if (picked != null) {
+              setModalState(() {
+                _pickedImage = File(picked.path);
+              });
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Edit Product', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundImage: _pickedImage != null
+                        ? FileImage(_pickedImage!)
+                        : (_imageBytes != null
+                            ? MemoryImage(_imageBytes!) as ImageProvider
+                            : NetworkImage("https://direthiopia.com/assets/images/product/upload/thumb/${product.imageUrl}")),
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.edit, size: 16),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Product Name'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Price (ETB)'),
+                ),
+                const SizedBox(height: 16),
+
+                _isUpdating
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: () async {
+                          setModalState(() => _isUpdating = true);
+
+                          final success = await Provider.of<DashboardProvider>(
+                            context,
+                            listen: false,
+                          ).updateProduct(
+                            productId: product.productId!.toInt(),
+                            name: _nameController.text.trim(),
+                            price: _priceController.text.trim(),
+                            imageFile: _pickedImage,
+                          );
+
+                          setModalState(() => _isUpdating = false);
+
+                          if (success) {
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Update failed")),
+                            );
+                          }
+                        },
+                        child: const Text('Save Changes'),
+                      ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+
 }
