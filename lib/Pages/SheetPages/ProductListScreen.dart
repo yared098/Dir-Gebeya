@@ -103,6 +103,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           },
                         ),
                 ),
+              
               ],
             ),
     );
@@ -445,7 +446,7 @@ void _showEditBottomSheet(BuildContext context, Product product) {
               children: [
                 const Text('Edit Product', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-
+                // Text(product.productId.toString()),
                 GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(

@@ -178,13 +178,115 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                 ],
               ),
               const Spacer(),
-              const Icon(Icons.edit_outlined, color: Colors.white, size: 24),
+              // const Icon(Icons.edit_outlined, color: Colors.white, size: 24),
+              InkWell(
+  onTap: () {
+    _showEditProfileBottomSheet(context, user);
+  },
+  child: const Icon(Icons.edit_outlined, color: Colors.white, size: 24),
+),
             ],
           ),
         ],
       ),
     );
   }
+  void _showEditProfileBottomSheet(BuildContext context, UserProfile user) {
+  final firstNameController = TextEditingController(text: user.firstName);
+  final lastNameController = TextEditingController(text: user.lastName);
+  final phoneController = TextEditingController(text: user.phone);
+
+  bool isUpdating = false;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // to adjust for keyboard
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          Future<void> _updateProfile() async {
+            setModalState(() => isUpdating = true);
+
+            // You need to add an updateProfile method in ProfileProvider
+            bool success = await Provider.of<ProfileProvider>(
+              context,
+              listen: false,
+            ).updateProfile(
+              firstNameController.text.trim(),
+              lastNameController.text.trim(),
+              phoneController.text.trim(),
+              "123"
+              
+            );
+
+            setModalState(() => isUpdating = false);
+
+            if (success) {
+              Navigator.pop(context); // close bottom sheet
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Profile updated successfully")),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    Provider.of<ProfileProvider>(context, listen: false).error ?? "Update failed",
+                  ),
+                ),
+              );
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              left: 16,
+              right: 16,
+              top: 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Edit Profile',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: firstNameController,
+                  decoration: const InputDecoration(labelText: 'First Name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: lastNameController,
+                  decoration: const InputDecoration(labelText: 'Last Name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Phone Number'),
+                ),
+                const SizedBox(height: 24),
+                isUpdating
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: _updateProfile,
+                        child: const Text('Update'),
+                      ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 
   Widget _buildStatsGrid(UserProfile user) {
     return Row(

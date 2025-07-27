@@ -33,18 +33,17 @@ class UserProfile {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'];
     return UserProfile(
-      firstName: profile['firstname'],
-      lastName: profile['lastname'],
-      email: profile['email'],
-      phone: profile['phone'],
-      avatar: profile['avatar'],
+      firstName: profile['firstname']?? "Guest",
+      lastName: profile['lastname']??"Guest",
+      email: profile['email']?? "guest@gmail.com",
+      phone: profile['phone']??" guest phone",
+      avatar: profile['avatar']??"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8AJM9wkP__z2M-hovSAWcTb_9XJ6smy3NKw&s",
       totalProducts: json['total_products'] ?? 0,
       totalWalletBalance: json['total_wallet_balance'] ?? 0,
       totalOrders: json['total_orders'] ?? 0,
     );
   }
 }
-
 class ProfileProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
@@ -54,7 +53,14 @@ class ProfileProvider extends ChangeNotifier {
   String? get error => _error;
   UserProfile? get userProfile => _userProfile;
 
-  Future<void> fetchProfile() async {
+  /// Fetch profile from API with optional force refresh.
+  /// If forceRefresh is false and cached profile exists, returns immediately.
+  Future<void> fetchProfile({bool forceRefresh = false}) async {
+    if (!forceRefresh && _userProfile != null) {
+      // Use cached data, no loading spinner
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -74,11 +80,11 @@ class ProfileProvider extends ChangeNotifier {
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
-      print("token_pr" + token);
 
       if (response.statusCode == 200) {
-        print("profile1" + response.body.toString());
+           print("profie"+response.body);
         final data = jsonDecode(response.body);
+      
         _userProfile = UserProfile.fromJson(data);
       } else {
         _error = "Failed to load profile (${response.statusCode})";
@@ -121,6 +127,56 @@ class ProfileProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = "Logout error: $e";
+      notifyListeners();
+      return false;
+    }
+  }
+
+   Future<bool> updateProfile(String firstName, String lastName, String phone,String userId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = "Missing token";
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/profile_api'); // Adjust endpoint if needed
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+
+          'firstname': firstName,
+          'lastname': lastName,
+          'phone': phone,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("update resp"+response.body);
+        await fetchProfile(forceRefresh: true); // refresh cached profile
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = "Failed to update profile (${response.statusCode})";
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = "Update error: $e";
+      _isLoading = false;
       notifyListeners();
       return false;
     }

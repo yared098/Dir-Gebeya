@@ -22,12 +22,17 @@ class MessagesProvider extends ChangeNotifier {
   int get limit => _limit;
   int get totalPages => _totalPages;
 
-  /// Fetch messages with optional filters and pagination
-  Future<void> fetchMessages({
+   Future<void> fetchMessages({
     String? status,
     int page = 1,
     int limit = 10,
+    bool forceRefresh = false,
   }) async {
+    // If data already loaded and no force refresh, skip fetching
+    if (_messages.isNotEmpty && !forceRefresh) {
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();

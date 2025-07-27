@@ -7,6 +7,57 @@ import '../config/api_config.dart';
 import '../utils/token_storage.dart';
 
 
+// class OrderProvider extends ChangeNotifier {
+//   bool _isLoading = false;
+//   List<Order> _orders = [];
+//   String? _error;
+
+//   bool get isLoading => _isLoading;
+//   List<Order> get orders => _orders;
+//   String? get error => _error;
+
+//   Future<void> fetchOrders() async {
+//     _isLoading = true;
+//     _error = null;
+//     notifyListeners();
+
+//     final token = await TokenStorage.getToken();
+//     if (token == null) {
+//       _error = "User not authenticated.";
+//       _isLoading = false;
+//       notifyListeners();
+//       return;
+//     }
+
+//     try {
+//       final response = await http.get(
+//         Uri.parse(ApiConfig.orders),
+//         headers: {
+//           'Authorization': 'Bearer $token',
+//         },
+//       );
+
+//       if (response.statusCode == 200) {
+//         final jsonData = jsonDecode(response.body);
+//         print("rsporder: ${response.body}"); // Correct way
+//         if (jsonData['order'] != null) {
+//           _orders = (jsonData['order'] as List)
+//               .map((item) => Order.fromJson(item))
+//               .toList();
+//         }
+//       } else {
+//         _error = "Failed to load orders";
+//       }
+//     } catch (e) {
+//       _error = "An error occurred: $e";
+//     }
+
+//     _isLoading = false;
+//     notifyListeners();
+//   }
+// }
+
+
 class OrderProvider extends ChangeNotifier {
   bool _isLoading = false;
   List<Order> _orders = [];
@@ -16,7 +67,10 @@ class OrderProvider extends ChangeNotifier {
   List<Order> get orders => _orders;
   String? get error => _error;
 
-  Future<void> fetchOrders() async {
+  /// Fetch orders — only reload if not already loaded unless force is true
+  Future<void> fetchOrders({bool force = false}) async {
+    if (_orders.isNotEmpty && !force) return;
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -39,7 +93,8 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        print("rsporder: ${response.body}"); // Correct way
+        print("✅ rsporder: ${response.body}");
+
         if (jsonData['order'] != null) {
           _orders = (jsonData['order'] as List)
               .map((item) => Order.fromJson(item))

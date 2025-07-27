@@ -13,43 +13,47 @@ class TransactionProvider with ChangeNotifier {
   List<Transaction> get transactions => _transactions;
   bool get isLoading => _isLoading;
   String? get error => _error;
+Future<void> fetchTransactions({bool forceRefresh = false}) async {
+  if (_transactions.isNotEmpty && !forceRefresh) {
+    // Data already loaded, no need to fetch again
+    return;
+  }
 
-  Future<void> fetchTransactions() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  _isLoading = true;
+  _error = null;
+  notifyListeners();
 
-    try {
-      final token = await TokenStorage.getToken();
-      if (token == null) {
-        _error = 'Missing auth token';
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('https://direthiopia.com/api/v3/seller/wallet_api?action=transactions'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        _transactions = (data['transactions'] as List)
-            .map((json) => Transaction.fromJson(json))
-            .toList();
-      } else {
-        throw Exception('Failed to fetch transactions');
-      }
-    } catch (e) {
-      _error = e.toString();
+  try {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = 'Missing auth token';
+      _isLoading = false;
+      notifyListeners();
+      return;
     }
 
-    _isLoading = false;
-    notifyListeners();
+    final response = await http.get(
+      Uri.parse('https://direthiopia.com/api/v3/seller/wallet_api?action=transactions'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      
+      _transactions = (data['transactions'] as List)
+          .map((json) => Transaction.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Failed to fetch transactions');
+    }
+  } catch (e) {
+    _error = e.toString();
   }
+
+  _isLoading = false;
+  notifyListeners();
+}
 }

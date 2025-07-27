@@ -19,7 +19,6 @@ class MessagesScreen extends StatefulWidget {
   @override
   State<MessagesScreen> createState() => _MessagesScreenState();
 }
-
 class _MessagesScreenState extends State<MessagesScreen> {
   @override
   void initState() {
@@ -27,10 +26,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
     Provider.of<MessagesProvider>(context, listen: false).fetchMessages(page: 1, limit: 10);
   }
 
+  Future<void> _refreshMessages() async {
+    await Provider.of<MessagesProvider>(context, listen: false).fetchMessages(page: 1, limit: 10, forceRefresh: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -45,110 +47,120 @@ class _MessagesScreenState extends State<MessagesScreen> {
       ),
       body: Consumer<MessagesProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
+          if (provider.isLoading && provider.messages.isEmpty) {
+            // Show loading only if empty (initial load)
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (provider.error != null) {
-            return Center(child: Text('Error: ${provider.error}', style: TextStyle(color: theme.colorScheme.error)));
+          if (provider.error != null && provider.messages.isEmpty) {
+            // Show error only if empty (initial load)
+            return Center(
+                child: Text('Error: ${provider.error}',
+                    style: TextStyle(color: theme.colorScheme.error)));
           }
 
           if (provider.messages.isEmpty) {
-            return const Center(child: Text('No messages available.'));
+            return RefreshIndicator(
+              onRefresh: _refreshMessages,
+              child: ListView(
+                children: const [
+                  SizedBox(height: 100),
+                  Center(child: Text('No messages available.')),
+                ],
+              ),
+            );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: provider.messages.length,
-            itemBuilder: (context, index) {
-              final msg = provider.messages[index];
-              final formattedTime = DateFormat('dd MMM, yyyy • hh:mm a').format(msg.createdAt);
-              final timeAgo = timeago.format(msg.createdAt);
+          // Wrap ListView with RefreshIndicator
+          return RefreshIndicator(
+            onRefresh: _refreshMessages,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: provider.messages.length,
+              itemBuilder: (context, index) {
+                final msg = provider.messages[index];
+                final formattedTime = DateFormat('dd MMM, yyyy • hh:mm a').format(msg.createdAt);
+                final timeAgo = timeago.format(msg.createdAt);
 
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MessageDetailScreen(message: msg),
-                    ),
-                  );
-                },
-                child: Card(
-                  
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 1,
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-  children: [
-    Expanded(
-      child: Text(
-        msg.moduleName,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-      ),
-    ),
-
-    // Seen/unseen text
-    Text(
-      msg.seen == 1 ? 'Seen' : 'Unseen',
-      style: TextStyle(
-        color: msg.seen == 1 ? Colors.green : Colors.redAccent,
-        fontWeight: FontWeight.bold,
-        fontSize: 14,
-      ),
-    ),
-  ],
-)
-,
-                        const SizedBox(height: 8),
-                        Text(
-                          msg.text,
-                          style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              formattedTime,
-                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
-                            ),
-                            Row(
-                              children: [
-                                Icon(Icons.access_time, size: 14, color: theme.iconTheme.color?.withOpacity(0.6)),
-                                const SizedBox(width: 4),
-                                
-                                Text(
-                                  timeAgo,
-                                  style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MessageDetailScreen(message: msg),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    elevation: 1,
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  msg.moduleName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
                                 ),
-                              ],
-                            )
-                          ],
-                        )
-                      ],
+                              ),
+                              Text(
+                                msg.seen == 1 ? 'Seen' : 'Unseen',
+                                style: TextStyle(
+                                  color: msg.seen == 1 ? Colors.green : Colors.redAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            msg.text,
+                            style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                formattedTime,
+                                style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                              ),
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time, size: 14, color: theme.iconTheme.color?.withOpacity(0.6)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    timeAgo,
+                                    style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                                  ),
+                                ],
+                              )
+                            ],
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
       ),
     );
   }
 }
-
 
 class MessageDetailScreen extends StatefulWidget {
   final Message message;

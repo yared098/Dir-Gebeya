@@ -25,7 +25,7 @@ class MyShop {
     required this.totalProducts,
     required this.coverTextColor,
     required this.coverShowVendorName,
-    required this .view
+    required this.view,
   });
 
   factory MyShop.fromJson(Map<String, dynamic> json) {
@@ -34,12 +34,11 @@ class MyShop {
       storeContactNumber: json['store_contact_number'],
       storeAddress: json['store_address'],
       storeProfilePhoto: json['store_profile_photo'],
-      totalBalance: json['total_balance'],
-      totalProducts: json['total_products'],
-      coverTextColor: json['store_meta']['cover_text_color'] ?? '#000000',
-      view: json['view'],
-      coverShowVendorName:
-          (json['store_meta']['cover_show_vendor_name'] == 1),
+      totalBalance: json['total_balance'] ?? 0,
+      totalProducts: json['total_products'] ?? 0,
+      coverTextColor: json['store_meta']?['cover_text_color'] ?? '#000000',
+      view: json['view'] ?? 0,
+      coverShowVendorName: json['store_meta']?['cover_show_vendor_name'] == 1,
     );
   }
 }
@@ -74,7 +73,6 @@ class MyShopProvider extends ChangeNotifier {
       });
 
       if (response.statusCode == 200) {
-        print("my_shop"+response.body);
         final data = jsonDecode(response.body);
         _shop = MyShop.fromJson(data);
       } else {
@@ -89,56 +87,55 @@ class MyShopProvider extends ChangeNotifier {
   }
 
   Future<bool> updateShopDetails({
-  required String name,
-  required String contact,
-  required String address,
-   File? storeProfilePhoto,
-}) async {
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    _error = "Unauthorized";
-    notifyListeners();
-    return false;
-  }
-
-  final url = Uri.parse('${ApiConfig.baseUrl}/shop_api');
-
-  final body = {
-    "store_name": name,
-    "store_contact_number": contact,
-    "store_address": address,
-    "store_meta": {
-      "cover_text_color": _shop?.coverTextColor ?? "#000000",
-      "cover_show_vendor_name": _shop?.coverShowVendorName == true ? 1 : 0,
-    },
-    "store_profile_photo": null,
-    "total_balance": _shop?.totalBalance ?? 0,
-    "total_products": _shop?.totalProducts ?? 0,
-  };
-
-  try {
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
-
-    if (response.statusCode == 200) {
-      await fetchShopDetails(); // refresh UI
-      return true;
-    } else {
-      _error = "Failed to update (${response.statusCode})";
+    required String name,
+    required String contact,
+    required String address,
+    File? storeProfilePhoto, // Currently unused, implement upload logic if needed
+  }) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = "Unauthorized";
       notifyListeners();
       return false;
     }
-  } catch (e) {
-    _error = "Update error: $e";
-    notifyListeners();
-    return false;
-  }
-}
 
+    final url = Uri.parse('${ApiConfig.baseUrl}/shop_api');
+
+    final body = {
+      "store_name": name,
+      "store_contact_number": contact,
+      "store_address": address,
+      "store_meta": {
+        "cover_text_color": _shop?.coverTextColor ?? "#000000",
+        "cover_show_vendor_name": _shop?.coverShowVendorName == true ? 1 : 0,
+      },
+      "store_profile_photo": null, // You can send photo URL or base64 here if needed
+      "total_balance": _shop?.totalBalance ?? 0,
+      "total_products": _shop?.totalProducts ?? 0,
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        await fetchShopDetails(); // Refresh shop info after update
+        return true;
+      } else {
+        _error = "Failed to update (${response.statusCode})";
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = "Update error: $e";
+      notifyListeners();
+      return false;
+    }
+  }
 }

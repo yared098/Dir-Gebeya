@@ -7,6 +7,21 @@ import 'package:provider/provider.dart';
 
 import 'order_detail_page.dart';
 
+import 'package:dirgebeya/Model/Order.dart';
+
+import 'package:dirgebeya/config/color.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'order_detail_page.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:dirgebeya/Model/Order.dart';
+
+import 'package:dirgebeya/config/color.dart';
+
+import 'order_detail_page.dart';
+
 class MyOrderScreen extends StatefulWidget {
   const MyOrderScreen({super.key});
 
@@ -36,25 +51,22 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final orderProvider = Provider.of<OrderProvider>(context);
+    final filteredOrders = _filteredOrders(orderProvider.orders);
+
     return Scaffold(
-      body: SafeArea(
-        child: Consumer<OrderProvider>(
-          builder: (context, orderProvider, child) {
-            if (orderProvider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (orderProvider.error != null) {
-              return Center(child: Text(orderProvider.error!));
-            }
-
-            final filteredOrders = _filteredOrders(orderProvider.orders);
-
-            return Column(
-              children: [
-                _buildAppBar(context),
-                _buildFilterChips(),
-                Expanded(
-                  child: filteredOrders.isEmpty
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await orderProvider.fetchOrders(); // removed "force: true"
+        },
+        child: Column(
+          children: [
+            _buildAppBar(context),
+            _buildFilterChips(),
+            Expanded(
+              child: orderProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredOrders.isEmpty
                       ? const Center(child: Text("No orders found."))
                       : ListView.separated(
                           padding: const EdgeInsets.all(16.0),
@@ -75,10 +87,8 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
                             );
                           },
                         ),
-                ),
-              ],
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -89,16 +99,14 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          ClipPath(
-            child: Container(
-              width: 40,
-              height: 45,
-              child: Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: Image.asset(
-                  'assets/image/logo.png',
-                  fit: BoxFit.contain,
-                ),
+          SizedBox(
+            width: 40,
+            height: 45,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Image.asset(
+                'assets/image/logo.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -155,6 +163,7 @@ class _MyOrderScreenState extends State<MyOrderScreen> {
     );
   }
 }
+
 
 class OrderCard extends StatelessWidget {
   final Order order;

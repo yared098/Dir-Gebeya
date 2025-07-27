@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:dirgebeya/Pages/Widgets/UpdateMyShopBottom.dart';
 import 'package:dirgebeya/Provider/myshop_provider.dart';
 import 'package:dirgebeya/config/color.dart';
@@ -34,7 +33,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
           onPressed: () {
-            Navigator.pop(context); // 🔁 Go back to previous screen
+            Navigator.pop(context);
           },
         ),
         title: const Text(
@@ -46,24 +45,23 @@ class _MyShopScreenState extends State<MyShopScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // This Stack handles the overlapping header and info card
+            // Overlapping header and card
             Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
               children: [
                 _buildHeaderBackground(),
                 Positioned(
-                  top: 130, // Position the card to overlap the header
+                  top: 130,
                   child: _buildShopInfoCard(),
                 ),
               ],
             ),
-            // The rest of the content goes here, with padding
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 110), // Space for the overlapping card
+                  const SizedBox(height: 110),
                   _buildStatsRow(),
                   const SizedBox(height: 24),
                   _buildToggleCard('Accept Delivery', _isTempClosed, (value) {
@@ -116,7 +114,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (provider.error != null) {
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -126,7 +123,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
             ),
           );
         }
-
         final shop = provider.shop;
         if (shop == null) return const SizedBox();
 
@@ -206,15 +202,9 @@ class _MyShopScreenState extends State<MyShopScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildInfoRow(
-                      Icons.phone_outlined,
-                      shop.storeContactNumber,
-                    ),
+                    _buildInfoRow(Icons.phone_outlined, shop.storeContactNumber),
                     const SizedBox(height: 8),
-                    _buildInfoRow(
-                      Icons.location_on_outlined,
-                      shop.storeAddress,
-                    ),
+                    _buildInfoRow(Icons.location_on_outlined, shop.storeAddress),
                   ],
                 ),
               ),
@@ -245,14 +235,13 @@ class _MyShopScreenState extends State<MyShopScreen> {
     return Consumer<MyShopProvider>(
       builder: (context, provider, _) {
         final productCount = provider.shop?.totalProducts.toString() ?? '--';
-        final _view = provider.shop!.view ?? 0;
-        print("productscount" + productCount.toString());
+        final viewCount = provider.shop?.view ?? 0;
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildStatCard(
-              value: "${_view}",
+              value: "$viewCount",
               label: 'View',
               icon: Icons.star,
               iconColor: Colors.orange,
@@ -348,32 +337,30 @@ class _MyShopScreenState extends State<MyShopScreen> {
   }
 }
 
-// Custom clipper for the wave shape
+// Custom clipper for wave background
 class WaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     var path = Path();
-    path.lineTo(0, size.height - 50); // Start from bottom-left, but higher up
-    // Creates the curve
+    path.lineTo(0, size.height - 50);
     var firstControlPoint = Offset(size.width / 4, size.height);
     var firstEndPoint = Offset(size.width / 2, size.height - 30);
     var secondControlPoint = Offset(size.width * 3 / 4, size.height - 60);
     var secondEndPoint = Offset(size.width, size.height - 40);
 
     path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
+        firstControlPoint.dx,
+        firstControlPoint.dy,
+        firstEndPoint.dx,
+        firstEndPoint.dy);
 
-    path.lineTo(size.width, 0); // Line to top-right
+    path.quadraticBezierTo(
+        secondControlPoint.dx,
+        secondControlPoint.dy,
+        secondEndPoint.dx,
+        secondEndPoint.dy);
+
+    path.lineTo(size.width, 0);
     path.close();
     return path;
   }

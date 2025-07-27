@@ -63,34 +63,55 @@ class _LoanScreenState extends State<LoanScreen> {
             ),
             centerTitle: true,
           ),
-          body: Column(
-            children: [
-              _buildFilterChips(context),
-              if (isLoading)
-                const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (error != null)
-                Expanded(child: Center(child: Text('Error: $error')))
-              else if (filteredTransactions.isEmpty)
-                const Expanded(
-                  child: Center(child: Text('No transactions found')),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: filteredTransactions.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return TransactionCard(
-                        transaction: filteredTransactions[index],
-                      );
-                    },
-                  ),
+       body: RefreshIndicator(
+  onRefresh: () async {
+    await Provider.of<LoanProvider>(context, listen: false).fetchLoans();
+  },
+  child: isLoading
+      ?  ListView(
+          physics: AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: 400,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        )
+      : error != null
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: 400,
+                  child: Center(child: Text('Error: $error')),
                 ),
-            ],
-          ),
+              ],
+            )
+          : filteredTransactions.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(
+                      height: 400,
+                      child: Center(child: Text('No transactions found')),
+                    ),
+                  ],
+                )
+              : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    _buildFilterChips(context),
+                    const SizedBox(height: 8),
+                    ...filteredTransactions.map((tx) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
+                        child: TransactionCard(transaction: tx),
+                      );
+                    }).toList(),
+                  ],
+                ),
+),
+
         );
       },
     );
