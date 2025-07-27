@@ -24,16 +24,28 @@ class _DashboardScreenState extends State<HomePage> {
  
 
   @override
-  void initState() {
-    super.initState();
-    // Fetch initial data after the first frame to avoid build phase issues
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<DashboardProvider>(context, listen: false);
+void initState() {
+  super.initState();
+
+  // Fetch initial data after the first frame
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final provider = Provider.of<DashboardProvider>(context, listen: false);
+
+    // ✅ Only fetch if not already loaded
+    if (provider.overviewData == null) {
       provider.fetchOverview();
+    }
+
+    if (provider.earningsData == null || provider.earningsData!.isEmpty) {
       provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
-      provider.fetchTopProducts(); // 👈 Fetch products here
-    });
-  }
+    }
+
+    if (provider.products == null || provider.products!.isEmpty) {
+      provider.fetchTopProducts();
+    }
+  });
+}
+
 
   void _onDropdownChanged(String? newValue) {
     if (newValue == null) return;
@@ -70,60 +82,59 @@ class _DashboardScreenState extends State<HomePage> {
 
         return Scaffold(
           appBar: _buildAppBar(context),
-          body: SafeArea(
-            child: dashboardProvider.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : dashboardProvider.error != null
-                ? Center(child: Text('Error: ${dashboardProvider.error}'))
-                : CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.all(8.0),
-                        sliver: SliverList(
-                          delegate: SliverChildListDelegate([
-                            _buildEarningsSection(
-                              dashboardProvider.earningsData,
-                            ),
-
-                            _buildRowCards(dashboardProvider.overviewData),
-
-                           
-                            const SizedBox(height: 20),
-                            _buildSectionTitle('Ongoing Orders'),
-                            const SizedBox(height: 16),
-                            _buildOngoingOrdersGrid(overview),
-                            const SizedBox(height: 24),
-                            _buildSectionTitle('Completed Orders'),
-                            const SizedBox(height: 8),
-                            _buildCompletedOrdersList(context, overview),
-                            const SizedBox(height: 10),
-                          ]),
-                        ),
-                      ),
-
-                      // StatisticsScreen as a fixed height sliver
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionTitle('My Products'),
-                              const SizedBox(height: 12),
-
-                              TopProductsGrid(
-                                topProducts: dashboardProvider.products,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+        body: SafeArea(
+  child: dashboardProvider.isLoading
+      ? const Center(child: CircularProgressIndicator())
+      : dashboardProvider.error != null
+          ? Center(child: Text('Error: ${dashboardProvider.error}'))
+          : RefreshIndicator(
+              onRefresh: () async {
+                await dashboardProvider.fetchOverview();
+                await dashboardProvider.fetchEarningsStats(
+                  sellerId: sellerId,
+                  type: _earningsType,
+                );
+                await dashboardProvider.fetchTopProducts();
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(), // ⚠️ required
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.all(8.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _buildEarningsSection(dashboardProvider.earningsData),
+                        _buildRowCards(dashboardProvider.overviewData),
+                        const SizedBox(height: 20),
+                        _buildSectionTitle('Ongoing Orders'),
+                        const SizedBox(height: 16),
+                        _buildOngoingOrdersGrid(overview),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('Completed Orders'),
+                        const SizedBox(height: 8),
+                        _buildCompletedOrdersList(context, overview),
+                        const SizedBox(height: 10),
+                      ]),
+                    ),
                   ),
-          ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle('My Products'),
+                          const SizedBox(height: 12),
+                          TopProductsGrid(topProducts: dashboardProvider.products),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+),
+
         );
       },
     );
