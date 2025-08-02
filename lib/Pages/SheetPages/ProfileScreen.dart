@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dirgebeya/Provider/profile_provider.dart';
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:dirgebeya/config/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -50,11 +51,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
           body: profileProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : user == null
-              ? Center(
-                  child: Text(
-                    profileProvider.error ?? "Failed to load profile",
-                  ),
-                )
+              ? ProviderErrorWidget(
+            message:"please turn on internet connections "
+          )
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(

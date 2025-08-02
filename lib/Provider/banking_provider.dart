@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:dirgebeya/config/api_config.dart';
 import 'package:dirgebeya/utils/token_storage.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +27,6 @@ class BankingProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-
     final token = await TokenStorage.getToken();
     if (token == null) {
       _error = 'Missing auth token';
@@ -37,18 +35,21 @@ class BankingProvider extends ChangeNotifier {
       return;
     }
 
-    final url = Uri.parse('https://direthiopia.com/api/v3/seller/add_payment'); // Adjust API URL
-    print("url_bank"+url.toString());
-    print("bank_token"+token);
+    final url = Uri.parse(
+      'https://direthiopia.com/api/v3/seller/add_payment',
+    ); // Adjust API URL
+    print("url_bank" + url.toString());
+    print("bank_token" + token);
     try {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-          print("bankdata"+data.toString());
-      
+        print("bankdata" + data.toString());
+
         // Assign fetched data (adjust keys to your API)
         bankName = data['bank_name'] ?? '';
         accountNumber = data['account_number'] ?? '';
@@ -66,57 +67,60 @@ class BankingProvider extends ChangeNotifier {
   }
 
   Future<bool> addPaymentDetails({
-  required String bankName,
-  required String accountNumber,
-  required String accountName,
-  required String ifscCode,
-  required String branch,
-}) async {
-  _isLoading = true;
-  _error = null;
-  _success = false;
-  notifyListeners();
-
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    _error = 'Missing auth token';
-    _isLoading = false;
+    required String bankName,
+    required String accountNumber,
+    required String accountName,
+    required String ifscCode,
+    required String branch,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    _success = false;
     notifyListeners();
-    return false;
-  }
 
-  final url = Uri.parse('https://direthiopia.com/api/v3/seller/add_payment');
-  final body = jsonEncode({
-    'bank_name': bankName,
-    'account_number': accountNumber,
-    'account_name': accountName,
-    // 'ifsc_code': ifscCode,
-    'branch': branch,
-    // 'status': '1',
-  });
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = 'Missing auth token';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
 
-  try {
-    final response = await http.post(url,
+    final url = Uri.parse('https://direthiopia.com/api/v3/seller/add_payment');
+    final body = jsonEncode({
+      'bank_name': bankName,
+      'account_number': accountNumber,
+      'account_name': accountName,
+      'ifsc_code': "1234",
+      'branch': branch,
+      'status': '1',
+    });
+
+    try {
+      final response = await http.post(
+        url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: body);
+        body: body,
+      );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      _success = true;
-      notifyListeners();
-      return true;
-    } else {
-      _error = 'Failed to submit bank info: ${response.statusCode}';
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _success = true;
+        print("send "+response.body);
+        notifyListeners();
+        return true;
+      } else {
+        _error = 'Failed to submit bank info: ${response.statusCode}';
+        print("error" + _error.toString());
+      }
+    } catch (e) {
+      _error = 'Error: $e';
     }
-  } catch (e) {
-    _error = 'Error: $e';
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
-
-  _isLoading = false;
-  notifyListeners();
-  return false;
-}
-
 }

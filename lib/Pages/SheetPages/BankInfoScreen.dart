@@ -48,7 +48,16 @@ class _BankInfoFormState extends State<BankInfoForm> {
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.error ?? 'Failed to submit')),
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(child: Text("Failed to submit bank information")),
+              ],
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -60,20 +69,30 @@ class _BankInfoFormState extends State<BankInfoForm> {
       curve: Curves.easeInOut,
       child: _isBannerVisible
           ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0EFFF),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.lightBlue.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.blue.shade200),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline, color: Color(0xFF0D6EFD)),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  Icon(
+                    Icons.info_rounded,
+                    color: Colors.blue.shade700,
+                    size: 30,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
                     child: Text(
-                      'You should fill-up this information correctly as this will be helpful for future transactions.',
-                      style: TextStyle(color: Colors.black54),
+                      'Fill in your bank details accurately. This ensures your future transactions go smoothly.',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue.shade900,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -83,12 +102,43 @@ class _BankInfoFormState extends State<BankInfoForm> {
                         _isBannerVisible = false;
                       });
                     },
-                    child: const Icon(Icons.close, color: Colors.black54),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.blue.shade700,
+                      size: 24,
+                    ),
                   ),
                 ],
               ),
             )
           : const SizedBox.shrink(),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, [IconData? icon]) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon != null ? Icon(icon, color: Colors.blue.shade700) : null,
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+      ),
     );
   }
 
@@ -98,96 +148,107 @@ class _BankInfoFormState extends State<BankInfoForm> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Bank Info'),
+        title: const Text('Edit Bank Information'),
+        centerTitle: true,
+
+        backgroundColor: Colors.white,
       ),
-      body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildInfoBanner(),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Form(
-                          key: _formKey,
-                          child: ListView(
-                            children: [
-                              TextFormField(
-                                controller: _holderNameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Holder Name',
-                                  prefixIcon: Icon(Icons.person),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) => value!.isEmpty ? 'Please enter holder name' : null,
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _bankNameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Bank Name',
-                                  prefixIcon: Icon(Icons.account_balance),
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) => value!.isEmpty ? 'Please enter bank name' : null,
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _branchController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Branch',
-                                  prefixIcon: Icon(Icons.location_city),
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _accountNumberController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Account Number',
-                                  prefixIcon: Icon(Icons.confirmation_num),
-                                  border: OutlineInputBorder(),
-                                ),
-                                keyboardType: TextInputType.number,
-                                validator: (value) => value!.isEmpty ? 'Please enter account number' : null,
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _ifscCodeController,
-                                decoration: const InputDecoration(
-                                  labelText: 'IFSC Code',
-                                  prefixIcon: Icon(Icons.code),
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: _submit,
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 14),
-                                  child: Text('Submit', style: TextStyle(fontSize: 16)),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ],
+      body: 
+            // dismiss keyboard on outside tap
+               SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 28,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildInfoBanner(),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _holderNameController,
+                            decoration: _inputDecoration(
+                              'Holder Name',
+                              Icons.person,
+                            ),
+                            validator: (value) => value!.trim().isEmpty
+                                ? 'Please enter holder name'
+                                : null,
+                            textInputAction: TextInputAction.next,
                           ),
-                        ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _bankNameController,
+                            decoration: _inputDecoration(
+                              'Bank Name',
+                              Icons.account_balance,
+                            ),
+                            validator: (value) => value!.trim().isEmpty
+                                ? 'Please enter bank name'
+                                : null,
+                            textInputAction: TextInputAction.next,
+                          ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _branchController,
+                            decoration: _inputDecoration(
+                              'Branch',
+                              Icons.location_city,
+                            ),
+                            textInputAction: TextInputAction.next,
+                          ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _accountNumberController,
+                            decoration: _inputDecoration(
+                              'Account Number',
+                              Icons.confirmation_num,
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) => value!.trim().isEmpty
+                                ? 'Please enter account number'
+                                : null,
+                            textInputAction: TextInputAction.next,
+                          ),
+                          const SizedBox(height: 20),
+                          // TextFormField(
+                          //   controller: _ifscCodeController,
+                          //   decoration: _inputDecoration('IFSC Code', Icons.code),
+                          //   textInputAction: TextInputAction.done,
+                          // ),
+                          // const SizedBox(height: 36),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton(
+                              onPressed: _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade700,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 5,
+                              ),
+                              child: const Text(
+                                'Submit',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            
     );
   }
 }

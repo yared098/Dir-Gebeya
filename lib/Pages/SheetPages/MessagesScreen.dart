@@ -1,9 +1,10 @@
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import 'package:dirgebeya/Provider/messages_provider.dart';  // Your MessagesProvider
+import 'package:dirgebeya/Provider/messages_provider.dart'; // Your MessagesProvider
 import 'package:dirgebeya/Model/Messages.dart'; // Import your Message model
 
 import 'package:flutter/material.dart';
@@ -11,23 +12,28 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-
-
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
   @override
   State<MessagesScreen> createState() => _MessagesScreenState();
 }
+
 class _MessagesScreenState extends State<MessagesScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<MessagesProvider>(context, listen: false).fetchMessages(page: 1, limit: 10);
+    Provider.of<MessagesProvider>(
+      context,
+      listen: false,
+    ).fetchMessages(page: 1, limit: 10);
   }
 
   Future<void> _refreshMessages() async {
-    await Provider.of<MessagesProvider>(context, listen: false).fetchMessages(page: 1, limit: 10, forceRefresh: true);
+    await Provider.of<MessagesProvider>(
+      context,
+      listen: false,
+    ).fetchMessages(page: 1, limit: 10, forceRefresh: true);
   }
 
   @override
@@ -40,7 +46,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
           "Messages",
           style: TextStyle(color: theme.textTheme.headlineLarge?.color),
         ),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         iconTheme: IconThemeData(color: theme.iconTheme.color),
         elevation: 0,
         centerTitle: true,
@@ -54,9 +61,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
           if (provider.error != null && provider.messages.isEmpty) {
             // Show error only if empty (initial load)
-            return Center(
-                child: Text('Error: ${provider.error}',
-                    style: TextStyle(color: theme.colorScheme.error)));
+            return ProviderErrorWidget(
+              message: "Please check your internet connection and try again ",
+            );
           }
 
           if (provider.messages.isEmpty) {
@@ -79,7 +86,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
               itemCount: provider.messages.length,
               itemBuilder: (context, index) {
                 final msg = provider.messages[index];
-                final formattedTime = DateFormat('dd MMM, yyyy • hh:mm a').format(msg.createdAt);
+                final formattedTime = DateFormat(
+                  'dd MMM, yyyy • hh:mm a',
+                ).format(msg.createdAt);
                 final timeAgo = timeago.format(msg.createdAt);
 
                 return GestureDetector(
@@ -95,7 +104,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     margin: const EdgeInsets.only(bottom: 12),
                     elevation: 1,
                     color: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -116,7 +127,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                               Text(
                                 msg.seen == 1 ? 'Seen' : 'Unseen',
                                 style: TextStyle(
-                                  color: msg.seen == 1 ? Colors.green : Colors.redAccent,
+                                  color: msg.seen == 1
+                                      ? Colors.green
+                                      : Colors.redAccent,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -126,7 +139,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           const SizedBox(height: 8),
                           Text(
                             msg.text,
-                            style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -134,20 +150,32 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             children: [
                               Text(
                                 formattedTime,
-                                style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.textTheme.bodySmall?.color,
+                                ),
                               ),
                               Row(
                                 children: [
-                                  Icon(Icons.access_time, size: 14, color: theme.iconTheme.color?.withOpacity(0.6)),
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: theme.iconTheme.color?.withOpacity(
+                                      0.6,
+                                    ),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     timeAgo,
-                                    style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: theme.textTheme.bodySmall?.color,
+                                    ),
                                   ),
                                 ],
-                              )
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -172,46 +200,48 @@ class MessageDetailScreen extends StatefulWidget {
 }
 
 class _MessageDetailScreenState extends State<MessageDetailScreen> {
-@override
-void initState() {
-  super.initState();
-  _markMessageReceived();
-}
+  @override
+  void initState() {
+    super.initState();
+    _markMessageReceived();
+  }
 
-Future<void> _markMessageReceived() async {
-  final provider = Provider.of<MessagesProvider>(context, listen: false);
-  final success = await provider.markMessageAsReceived(
-    id: widget.message.id,
-    userId: widget.message.userId,
-  );
+  Future<void> _markMessageReceived() async {
+    final provider = Provider.of<MessagesProvider>(context, listen: false);
+    final success = await provider.markMessageAsReceived(
+      id: widget.message.id,
+      userId: widget.message.userId,
+    );
 
-  if (success) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Message marked as received')),
-      );
-    }
-  } else {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to mark message as received: ${provider.error ?? "Unknown error"}')),
-      );
+    if (success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Message marked as received')),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: ProviderErrorWidget(
+              message: "Please check your internet connection and try again ",
+            ),
+          ),
+        );
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
     final message = widget.message;
-    final formattedTime = DateFormat('dd MMM, yyyy • hh:mm a').format(message.createdAt);
+    final formattedTime = DateFormat(
+      'dd MMM, yyyy • hh:mm a',
+    ).format(message.createdAt);
     final timeAgo = timeago.format(message.createdAt);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Message Detail"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Message Detail"), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -234,16 +264,15 @@ Future<void> _markMessageReceived() async {
               style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
             const SizedBox(height: 12),
-              // Seen/unseen text
-    Text(
-      message.seen == 1 ? 'Seen' : 'Unseen',
-      style: TextStyle(
-        color: message.seen == 1 ? Colors.green : Colors.redAccent,
-        fontWeight: FontWeight.bold,
-        fontSize: 14,
-      ),
-    ),
-  
+            // Seen/unseen text
+            Text(
+              message.seen == 1 ? 'Seen' : 'Unseen',
+              style: TextStyle(
+                color: message.seen == 1 ? Colors.green : Colors.redAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -261,16 +290,13 @@ Future<void> _markMessageReceived() async {
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
-                )
+                ),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            Text(
-              message.text,
-              style: const TextStyle(fontSize: 16),
-            ),
+            Text(message.text, style: const TextStyle(fontSize: 16)),
 
             const SizedBox(height: 12),
 
@@ -278,7 +304,8 @@ Future<void> _markMessageReceived() async {
             Text("Module ID: ${message.moduleId}"),
             Text("Seen: ${message.seen}"),
             Text("Received: ${message.received}"),
-            if (message.estimation != null) Text("Estimation: ${message.estimation}"),
+            if (message.estimation != null)
+              Text("Estimation: ${message.estimation}"),
             Text("User ID: ${message.userId}"),
             if (message.status != null) Text("Status: ${message.status}"),
           ],

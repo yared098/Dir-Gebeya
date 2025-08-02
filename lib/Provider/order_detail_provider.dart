@@ -29,8 +29,9 @@ class OrderDetailResponse {
       history: (json['history'] as List)
           .map((e) => OrderHistory.fromJson(e))
           .toList(),
-      proof:
-          (json['proof'] as List).map((e) => OrderProof.fromJson(e)).toList(),
+      proof: (json['proof'] as List)
+          .map((e) => OrderProof.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -60,7 +61,6 @@ class Order {
   final String files;
   final String? comment;
   final String createdAt;
-  
 
   Order({
     required this.id,
@@ -243,8 +243,9 @@ class OrderDetailProvider extends ChangeNotifier {
     }
 
     final url = Uri.parse(
-        "https://direthiopia.com/api/v3/seller/order_detail_api?order_id=$orderId");
-   print("ord"+url.toString());
+      "https://direthiopia.com/api/v3/seller/order_detail_api?order_id=$orderId",
+    );
+    print("ord" + url.toString());
     try {
       final response = await http.get(
         url,
@@ -252,8 +253,8 @@ class OrderDetailProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        print("order_detial"+response.body.toString());
-        
+        print("order_detial" + response.body.toString());
+
         final data = jsonDecode(response.body);
         final parsed = OrderDetailResponse.fromJson(data);
 
@@ -273,47 +274,91 @@ class OrderDetailProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-Future<bool> approveOrder(int orderId) async {
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    _error = "Unauthorized";
-    notifyListeners();
-    return false;
-  }
-
-  final url = Uri.parse("https://direthiopia.com/api/v3/seller/dispatcher?action=accept");
-
-  // Format current time as 'yyyy-MM-dd HH-mm-ss'
-  final now = DateTime.now();
-  final formattedTime = DateFormat('yyyy-MM-dd HH-mm-ss').format(now);
-
-  try {
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'order_id': orderId.toString(),  // send as string if required
-        'accepted_time': formattedTime,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      await fetchOrderDetail(orderId); // Refresh state
-      return true;
-    } else {
-      _error = "Approval failed: ${response.statusCode}";
+ 
+  Future<bool> approveOrder(
+    int orderId,
+    String newStatus, {
+    required String currentStatus, // pass the current status of the order here
+    String? comment,
+    String? acceptedTime,
+    String? rejectedTime,
+    String? pickedUpTime,
+    String? deliveredTime,
+  }) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = "Unauthorized";
       notifyListeners();
       return false;
     }
-  } catch (e) {
-    _error = "Network error: $e";
-    notifyListeners();
-    return false;
+
+    final now = DateTime.now();
+    final formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+
+    Uri url;
+    Map<String, dynamic> body;
+
+    // If current status is assigned AND new status is accepted, use accept endpoint
+    if (currentStatus.toLowerCase() == 'assigned' &&
+        newStatus.toLowerCase() == 'accepted') {
+      url = Uri.parse(
+        "https://direthiopia.com/api/v3/seller/dispatcher?action=accept",
+      );
+      body = {
+        'order_id': orderId.toString(),
+        'accepted_time': acceptedTime ?? formattedTime,
+      };
+    } else {
+      // For all other status updates (including after accepted)
+      url = Uri.parse(
+        "https://direthiopia.com/api/v3/seller/dispatcher?action=update-status",
+      );
+
+      // Determine the time value depending on newStatus and passed params
+      String timeValue = formattedTime;
+      if (newStatus.toLowerCase() == 'rejected' && rejectedTime != null) {
+        timeValue = rejectedTime;
+      } else if (newStatus.toLowerCase() == 'picked' && pickedUpTime != null) {
+        timeValue = pickedUpTime;
+      } else if (newStatus.toLowerCase() == 'delivered' &&
+          deliveredTime != null) {
+        timeValue = deliveredTime;
+      }
+
+      body = {
+        'order_id': orderId.toString(),
+        'status': newStatus.toLowerCase(),
+        'time': timeValue,
+        'comment': comment ?? 'from mobile app',
+      };
+    }
+    print("new-url" + url.toString());
+    print("newbody" + body.toString());
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        await fetchOrderDetail(orderId); // Refresh order detail after success
+        print("Response: ${response.body}");
+        return true;
+      } else {
+        print("error body" + response.statusCode.toString());
+        _error = "Approval failed: ${response.statusCode}";
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = "Network error: $e";
+      notifyListeners();
+      return false;
+    }
   }
-}
-
-
 }

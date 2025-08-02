@@ -34,9 +34,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
      
   }
 
-
-
-
   Future<void> _loadToken() async {
     final token = await TokenStorage.getToken();
     if (token == null) {
@@ -81,7 +78,34 @@ class _ProductListScreenState extends State<ProductListScreen> {
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : provider.error != null
-          ? Center(child: Text(provider.error!))
+  ? Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 48),
+          const SizedBox(height: 12),
+          const Text(
+            "Something went wrong.",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Please refresh the page.",
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              // Trigger refresh: call your fetch method here
+              Provider.of<ProductsProvider>(context, listen: false)
+                  .fetchProducts(forceRefresh: true);
+            },
+            child: const Text('Refresh'),
+          ),
+        ],
+      ),
+    )
+  
           : Column(
               children: [
                 _buildSearchBar(context),

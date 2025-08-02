@@ -1,5 +1,6 @@
 import 'package:dirgebeya/Model/Transaction.dart';
 import 'package:dirgebeya/Provider/TransactionProvider.dart' hide TransactionStatus;
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +42,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
           }
 
           if (provider.error != null) {
-            return Center(child: Text("Error: ${provider.error}"));
+            return ProviderErrorWidget(
+            message:"No transactions available"
+          );
           }
 
           if (provider.transactions.isEmpty) {

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:barcode_widget/barcode_widget.dart';
 
 import 'package:dirgebeya/Pages/Widgets/TopProducts.dart';
 // import 'package:dirgebeya/Pages/Widgets/statistics_widgets.dart';
 import 'package:dirgebeya/Provider/dashboard_provider.dart';
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,31 +24,40 @@ class _DashboardScreenState extends State<HomePage> {
   String _earningsType = 'monthly';
   final String sellerId = '2040';
 
- 
+  Timer? _autoRefreshTimer; // Timer for auto refresh
 
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  // Fetch initial data after the first frame
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final provider = Provider.of<DashboardProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<DashboardProvider>(context, listen: false);
 
-    // ✅ Only fetch if not already loaded
-    if (provider.overviewData == null) {
+      if (provider.overviewData == null) {
+        provider.fetchOverview();
+      }
+      if (provider.earningsData == null || provider.earningsData!.isEmpty) {
+        provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
+      }
+      if (provider.products == null || provider.products!.isEmpty) {
+        provider.fetchTopProducts();
+      }
+    });
+
+    // Setup auto refresh every 60 seconds (adjust duration as needed)
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+      final provider = Provider.of<DashboardProvider>(context, listen: false);
       provider.fetchOverview();
-    }
-
-    if (provider.earningsData == null || provider.earningsData!.isEmpty) {
       provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
-    }
-
-    if (provider.products == null || provider.products!.isEmpty) {
       provider.fetchTopProducts();
-    }
-  });
-}
+    });
+  }
 
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
 
   void _onDropdownChanged(String? newValue) {
     if (newValue == null) return;
@@ -53,10 +65,9 @@ void initState() {
     setState(() {
       _dropdownValue = newValue;
 
-      // Update earnings type based on dropdown selection
       switch (newValue) {
         case 'OverAll':
-          _earningsType = 'monthly'; // Or set to 'overall' if supported
+          _earningsType = 'monthly';
           break;
         case ' Month':
           _earningsType = 'monthly';
@@ -69,7 +80,6 @@ void initState() {
       }
     });
 
-    // Fetch earnings data for new earnings type
     final provider = Provider.of<DashboardProvider>(context, listen: false);
     provider.fetchEarningsStats(sellerId: sellerId, type: _earningsType);
   }
@@ -82,65 +92,81 @@ void initState() {
 
         return Scaffold(
           appBar: _buildAppBar(context),
-        body: SafeArea(
-  child: dashboardProvider.isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : dashboardProvider.error != null
-          ? Center(child: Text('Error: ${dashboardProvider.error}'))
-          : RefreshIndicator(
-              onRefresh: () async {
-                await dashboardProvider.fetchOverview();
-                await dashboardProvider.fetchEarningsStats(
-                  sellerId: sellerId,
-                  type: _earningsType,
-                );
-                await dashboardProvider.fetchTopProducts();
-              },
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(), // ⚠️ required
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.all(8.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _buildEarningsSection(dashboardProvider.earningsData),
-                        _buildRowCards(dashboardProvider.overviewData),
-                        const SizedBox(height: 20),
-                        _buildSectionTitle('Ongoing Orders'),
-                        const SizedBox(height: 16),
-                        _buildOngoingOrdersGrid(overview),
-                        const SizedBox(height: 24),
-                        _buildSectionTitle('Completed Orders'),
-                        const SizedBox(height: 8),
-                        _buildCompletedOrdersList(context, overview),
-                        const SizedBox(height: 10),
-                      ]),
+          body: SafeArea(
+            child: dashboardProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : dashboardProvider.error != null
+                ? ProviderErrorWidget(
+                    message:
+                        "Please check your internet connection and try again.",
+                    onRetry: () async {
+                      await dashboardProvider.fetchOverview();
+                      await dashboardProvider.fetchEarningsStats(
+                        sellerId: sellerId,
+                        type: _earningsType,
+                      );
+                      await dashboardProvider.fetchTopProducts();
+                    },
+                  )
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await dashboardProvider.fetchOverview();
+                      await dashboardProvider.fetchEarningsStats(
+                        sellerId: sellerId,
+                        type: _earningsType,
+                      );
+                      await dashboardProvider.fetchTopProducts();
+                    },
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.all(8.0),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              _buildEarningsSection(
+                                dashboardProvider.earningsData,
+                              ),
+                              _buildRowCards(dashboardProvider.overviewData),
+                              const SizedBox(height: 20),
+                              _buildSectionTitle('Ongoing Orders'),
+                              const SizedBox(height: 16),
+                              _buildOngoingOrdersGrid(overview),
+                              const SizedBox(height: 24),
+                              _buildSectionTitle('Completed Orders'),
+                              const SizedBox(height: 8),
+                              _buildCompletedOrdersList(context, overview),
+                              const SizedBox(height: 10),
+                            ]),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionTitle('My Products'),
+                                const SizedBox(height: 12),
+                                TopProductsGrid(
+                                  topProducts: dashboardProvider.products,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    sliver: SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSectionTitle('My Products'),
-                          const SizedBox(height: 12),
-                          TopProductsGrid(topProducts: dashboardProvider.products),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-),
-
+          ),
         );
       },
     );
   }
 
-  
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
@@ -348,43 +374,43 @@ void initState() {
     );
   }
 
- Widget _buildRowCards(Map<String, dynamic>? earningsData) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildRowCards(Map<String, dynamic>? earningsData) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            if (!isDark)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Vendor Tools Overview",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-        ],
+            const SizedBox(height: 16),
+            _buildCircularIconsRow(context, earningsData),
+          ],
+        ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Vendor Tools Overview",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCircularIconsRow(context, earningsData),
-        ],
-      ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildCircularIconsRow(
     BuildContext context,
@@ -420,56 +446,60 @@ void initState() {
     );
   }
 
- Widget _buildIconCard(
-  BuildContext context, {
-  required String title,
-  required String value,
-  required IconData icon,
-  required String route,
-  Color cardColor = const Color.fromARGB(255, 250, 250, 250), // Optional card background
-}) {
-  return GestureDetector(
-    onTap: () => _showInfoDialog(context, title, value, icon),
-    child: Container(
-      width: 70,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.white,
-            child: Icon(icon, color: AppColors.primary, size: 22),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+  Widget _buildIconCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required String route,
+    Color cardColor = const Color.fromARGB(
+      255,
+      250,
+      250,
+      250,
+    ), // Optional card background
+  }) {
+    return GestureDetector(
+      onTap: () => _showInfoDialog(context, title, value, icon),
+      child: Container(
+        width: 70,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 3),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: Colors.white,
+              child: Icon(icon, color: AppColors.primary, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
- 
   void _showInfoDialog(
     BuildContext context,
     String title,
@@ -634,7 +664,6 @@ void initState() {
     );
   }
 
-  
   Widget _buildOrderCard({
     required String count,
     required String label,

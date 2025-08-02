@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
+import '../utils/catchMechanisem.dart'; // 👈 Make sure this import is correct
 
 class MyShop {
   final String storeName;
@@ -41,9 +42,26 @@ class MyShop {
       coverShowVendorName: json['store_meta']?['cover_show_vendor_name'] == 1,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'store_name': storeName,
+      'store_contact_number': storeContactNumber,
+      'store_address': storeAddress,
+      'store_profile_photo': storeProfilePhoto,
+      'total_balance': totalBalance,
+      'total_products': totalProducts,
+      'view': view,
+      'store_meta': {
+        'cover_text_color': coverTextColor,
+        'cover_show_vendor_name': coverShowVendorName ? 1 : 0,
+      },
+    };
+  }
 }
 
 class MyShopProvider extends ChangeNotifier {
+  static const String _cacheKey = 'cached_shop';
   bool _isLoading = false;
   String? _error;
   MyShop? _shop;
@@ -51,50 +69,70 @@ class MyShopProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   MyShop? get shop => _shop;
+Future<void> fetchShopDetails({bool forceRefresh = false}) async {
+  _isLoading = true;
+  _error = null;
+  notifyListeners();
 
-  Future<void> fetchShopDetails() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  final isOnline = await IsConnected();
 
-    final token = await TokenStorage.getToken();
-    if (token == null) {
-      _error = "Missing token";
-      _isLoading = false;
-      notifyListeners();
-      return;
-    }
-
-    final url = Uri.parse('${ApiConfig.baseUrl}/shop_api');
-
-    try {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        _shop = MyShop.fromJson(data);
-      } else {
-        _error = "Failed to load shop (${response.statusCode})";
+  if (!isOnline && !forceRefresh) {
+    final cached = await LoadCachedData(_cacheKey);
+    if (cached != null) {
+      try {
+        _shop = MyShop.fromJson(cached);
+        _error = null;
+      } catch (_) {
+        _error = "Couldn't load cached shop data. Please try again.";
       }
-    } catch (e) {
-      _error = "Error: $e";
+    } else {
+      _error = "You're offline and no saved shop data was found.";
     }
-
     _isLoading = false;
     notifyListeners();
+    return;
   }
+
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    _error = "Missing token. Please login again.";
+    _isLoading = false;
+    notifyListeners();
+    return;
+  }
+
+  final url = Uri.parse('${ApiConfig.baseUrl}/shop_api');
+
+  try {
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      _shop = MyShop.fromJson(data);
+      await CacheData(_cacheKey, data);
+      _error = null;
+    } else {
+      _error = "Failed to load shop (${response.statusCode})";
+    }
+  } catch (e) {
+    _error = "An error occurred. Please check your internet connection.";
+  }
+
+  _isLoading = false;
+  notifyListeners();
+}
 
   Future<bool> updateShopDetails({
     required String name,
     required String contact,
     required String address,
-    File? storeProfilePhoto, // Currently unused, implement upload logic if needed
+    File? storeProfilePhoto,
   }) async {
     final token = await TokenStorage.getToken();
     if (token == null) {
-      _error = "Unauthorized";
+      _error = "Unauthorized. Please log in again.";
       notifyListeners();
       return false;
     }
@@ -109,7 +147,7 @@ class MyShopProvider extends ChangeNotifier {
         "cover_text_color": _shop?.coverTextColor ?? "#000000",
         "cover_show_vendor_name": _shop?.coverShowVendorName == true ? 1 : 0,
       },
-      "store_profile_photo": null, // You can send photo URL or base64 here if needed
+      "store_profile_photo": null,
       "total_balance": _shop?.totalBalance ?? 0,
       "total_products": _shop?.totalProducts ?? 0,
     };
@@ -125,15 +163,15 @@ class MyShopProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await fetchShopDetails(); // Refresh shop info after update
+        await fetchShopDetails(forceRefresh: true); // 🔁 Refresh
         return true;
       } else {
-        _error = "Failed to update (${response.statusCode})";
+        _error = "Failed to update shop (${response.statusCode})";
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = "Update error: $e";
+      _error = "Update failed. Please check your connection.";
       notifyListeners();
       return false;
     }

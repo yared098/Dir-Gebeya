@@ -1,5 +1,7 @@
+import 'package:dirgebeya/Pages/Delivery_Screen.dart';
 import 'package:dirgebeya/Pages/Widgets/showStatusDialog.dart';
 import 'package:dirgebeya/Provider/order_detail_provider.dart';
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:dirgebeya/Provider/dispatch_provider.dart';
@@ -9,8 +11,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 class DispatchDetailPage extends StatefulWidget {
   final int orderId;
+  final String Status;
 
-  const DispatchDetailPage({super.key, required this.orderId});
+  const DispatchDetailPage({
+    super.key,
+    required this.orderId,
+    required this.Status,
+  });
 
   @override
   State<DispatchDetailPage> createState() => _DispatchDetailPageState();
@@ -34,13 +41,18 @@ class _DispatchDetailPageState extends State<DispatchDetailPage> {
     final order = provider.order;
     final products = provider.products;
     final history = provider.history;
+    print("dispdetil" + order.toString());
 
     if (provider.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (provider.error != null) {
-      return Scaffold(body: Center(child: Text(provider.error!)));
+      return Scaffold(
+        body: ProviderErrorWidget(
+          message: "Please turn on your internet connection",
+        ),
+      );
     }
 
     return Scaffold(
@@ -49,19 +61,20 @@ class _DispatchDetailPageState extends State<DispatchDetailPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            if (order != null) _buildCustomerInfoCard(order,products[0]),
+            if (order != null) _buildCustomerInfoCard(order, products[0]),
             const SizedBox(height: 16),
-             if (order != null) _buildBillingCard(order),
-             const SizedBox(height: 16),
-             _buildReasonCard(history),
+            if (order != null) _buildBillingCard(order),
+            const SizedBox(height: 16),
+            _buildReasonCard(history),
             if (products.isNotEmpty && order != null)
               _buildProductCard(products[0], order),
             const SizedBox(height: 16),
-            
           ],
         ),
       ),
-      bottomSheet: _buildActionButtons(context,order,products)
+      bottomSheet: order!.status != 0
+          ? _buildActionButtons(context, order, products, widget.Status)
+          : null,
     );
   }
 
@@ -96,7 +109,6 @@ class _DispatchDetailPageState extends State<DispatchDetailPage> {
         Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: CircleAvatar(
-
             backgroundColor: AppColors.primary,
             child: const Icon(Icons.history, color: Colors.white, size: 24),
           ),
@@ -288,67 +300,71 @@ class _DispatchDetailPageState extends State<DispatchDetailPage> {
     );
   }
 
- Widget _buildBillingRow(String label, String amount, {bool isTotal = false}) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isTotal ? Colors.black : Colors.grey[700],
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-                fontSize: isTotal ? 13 : 12,
+  Widget _buildBillingRow(String label, String amount, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isTotal ? Colors.black : Colors.grey[700],
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isTotal ? 13 : 12,
+                ),
               ),
-            ),
-            Text(
-              amount,
-              style: TextStyle(
-                color: isTotal ? Color(0xFF1D4ED8) : Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: isTotal ? 16 : 14,
+              Text(
+                amount,
+                style: TextStyle(
+                  color: isTotal ? Color(0xFF1D4ED8) : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isTotal ? 16 : 14,
+                ),
               ),
-            ),
-          ],
-        ),
-        if (isTotal)
-          Container(
-            margin: const EdgeInsets.only(top: 8.0),
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Colors.yellow[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange[800], size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Collect this amount if payment term is Cash on Delivery.",
-                    style: TextStyle(
-                      color: Colors.orange[800],
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+            ],
+          ),
+          if (isTotal)
+            Container(
+              margin: const EdgeInsets.only(top: 8.0),
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Colors.yellow[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange[800],
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Collect this amount if payment term is Cash on Delivery.",
+                      style: TextStyle(
+                        color: Colors.orange[800],
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   Widget _buildCustomerInfoCard(Order order, OrderProduct product) {
     return Card(
-     elevation: 1,
+      elevation: 1,
       color: Colors.white,
       shadowColor: Colors.black.withOpacity(0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -480,22 +496,34 @@ class _DispatchDetailPageState extends State<DispatchDetailPage> {
       ),
     );
   }
-
-
-Widget _buildActionButtons(BuildContext context, Order? order, List<OrderProduct> products) {
+Widget _buildActionButtons(
+  BuildContext context,
+  Order? order,
+  List<OrderProduct> products,
+  String status,
+) {
   final provider = Provider.of<OrderDetailProvider>(context, listen: false);
 
+  String buttonLabel;
+  if (status.toLowerCase() == 'assigned') {
+    buttonLabel = 'Review Order';
+  } else if (status.toLowerCase() == 'accepted') {
+    buttonLabel = 'Pickup';
+  } else if (status.toLowerCase() == 'picked') {
+    buttonLabel = 'Deliver';
+  } else {
+    buttonLabel = status.toUpperCase();
+  }
+
   return Container(
-    // margin: const EdgeInsets.all(12),
     padding: const EdgeInsets.all(16),
-    
     child: SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         icon: const Icon(Icons.check_circle, size: 20),
-        label: const Text(
-          'Finish',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        label: Text(
+          buttonLabel,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -506,25 +534,35 @@ Widget _buildActionButtons(BuildContext context, Order? order, List<OrderProduct
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            builder: (ctx) {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.check, color: Colors.green),
-                      title: const Text('Approve'),
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        if (order != null) {
-                          final success = await provider.approveOrder(order.id);
+        onPressed: () async {
+          if (order == null) return;
+
+          final currentStatus = status.toLowerCase();
+
+          if (currentStatus == 'assigned') {
+            // Accept or reject step with accept endpoint for status change assigned -> accepted
+            showModalBottomSheet(
+              context: context,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              builder: (ctx) {
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.check, color: Colors.green),
+                        title: const Text('Accept'),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final success = await provider.approveOrder(
+                            order.id,
+                            'accepted',
+                            currentStatus: 'assigned',
+                            acceptedTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+                          );
                           if (success) {
                             showStatusDialog(context, isAccepted: true);
                           } else {
@@ -532,24 +570,78 @@ Widget _buildActionButtons(BuildContext context, Order? order, List<OrderProduct
                               SnackBar(content: Text(provider.error ?? "Approval failed")),
                             );
                           }
-                        }
-                      },
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.close, color: Colors.red),
-                      title: const Text('Reject'),
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        showStatusDialog(context, isAccepted: false);
-                        // TODO: Add reject logic here
-                      },
-                    ),
-                  ],
-                ),
+                        },
+                      ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.close, color: Colors.red),
+                        title: const Text('Reject'),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final success = await provider.approveOrder(
+                            order.id,
+                            'rejected',
+                            currentStatus: currentStatus,
+                            rejectedTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+                          );
+                          if (success) {
+                            showStatusDialog(context, isAccepted: false);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => RefundScreen()),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(provider.error ?? "Rejection failed")),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          } else if (currentStatus == 'accepted') {
+            // Use update-status endpoint to set picked status
+            final success = await provider.approveOrder(
+              order.id,
+              'picked',
+              currentStatus: currentStatus,
+              pickedUpTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+            );
+            if (success) {
+              showStatusDialog(context, isAccepted: true);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(provider.error ?? "Failed to update to pickup")),
               );
-            },
-          );
+            }
+          } else if (currentStatus == 'picked') {
+            // Use update-status endpoint to set delivered status
+            final success = await provider.approveOrder(
+              order.id,
+              'delivered',
+              currentStatus: currentStatus,
+              deliveredTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+              comment: 'Delivery confirmed',
+            );
+            if (success) {
+              showStatusDialog(context, isAccepted: true);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => RefundScreen()),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(provider.error ?? "Delivery failed")),
+              );
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No action available for this status')),
+            );
+          }
         },
       ),
     ),

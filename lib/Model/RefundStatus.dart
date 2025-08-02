@@ -1,8 +1,9 @@
 enum RefundStatus {
-  Pending,
-  Approved,
+  Assigned,
+  Accepted,
+  Picked,
+  Delivered,
   Rejected,
-  Processing,
 }
 
 class RefundRequest {

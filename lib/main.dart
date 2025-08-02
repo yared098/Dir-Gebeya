@@ -61,7 +61,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) {
             final provider = DashboardProvider();
-            provider.fetchOverview(); // this triggers API call
+            provider.fetchOverview(); 
             return provider;
           },
         ),

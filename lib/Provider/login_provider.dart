@@ -100,20 +100,48 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> logout() async {
-    _token = null;
-    _user = null;
-
-    // ✅ Clear SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('saved_phone');
-    await prefs.remove('saved_password');
-    await prefs.setBool('remember_me', false);
-    await prefs.remove('token');
-    await prefs.remove('user');
-
-    await TokenStorage.clearToken();
+  Future<bool> logout() async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
+
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = 'Missing auth token';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/logout_api');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        // Clear stored token
+        await TokenStorage.clearToken();
+
+        // Clear all shared preferences data
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = 'Logout failed: ${response.statusCode}';
+      }
+    } catch (e) {
+      _error = 'Error: $e';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 
   Future<void> loadTokenAndUser() async {

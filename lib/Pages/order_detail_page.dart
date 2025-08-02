@@ -1,6 +1,8 @@
 import 'package:dirgebeya/Model/Product.dart';
 import 'package:dirgebeya/Provider/order_detail_provider.dart';
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:dirgebeya/config/color.dart';
+import 'package:dirgebeya/utils/catchMechanisem.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -16,17 +18,36 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  bool _hasInternet = true;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      final provider = Provider.of<OrderDetailProvider>(context, listen: false);
-      provider.fetchOrderDetail(widget.orderId);
+    Future.microtask(() async {
+      _hasInternet = await IsConnected();
+      if (_hasInternet) {
+        final provider = Provider.of<OrderDetailProvider>(context, listen: false);
+        provider.fetchOrderDetail(widget.orderId);
+      } else {
+        setState(() {}); // To rebuild and show the message
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasInternet) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            '⚠️ Please turn on your internet connection',
+            style: TextStyle(fontSize: 16, color: Colors.redAccent),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     final provider = Provider.of<OrderDetailProvider>(context);
     final order = provider.order;
     final products = provider.products;
@@ -37,7 +58,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
 
     if (provider.error != null) {
-      return Scaffold(body: Center(child: Text(provider.error!)));
+      return ProviderErrorWidget(
+            message:"please turn on internet connections "
+          );
     }
 
     return Scaffold(
@@ -53,12 +76,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             const SizedBox(height: 16),
             if (order != null) _buildBillingCard(order),
             const SizedBox(height: 16),
-            if (order != null) _buildCustomerInfoCard(order,products[0]),
+            if (order != null) _buildCustomerInfoCard(order, products[0]),
             const SizedBox(height: 80),
           ],
         ),
       ),
-     
     );
   }
 

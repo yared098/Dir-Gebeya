@@ -32,12 +32,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _isLoggingOut = false);
       Navigator.pushReplacementNamed(context, '/login');
     } else {
-      // Navigator.pushReplacementNamed(context, '/login');
-      if (!mounted) return;
-      setState(() => _isLoggingOut = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(profileProvider.error ?? "Logout failed")),
-      );
+       final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      Navigator.pushReplacementNamed(context, '/login');
+      
+      // if (!mounted) return;
+      // setState(() => _isLoggingOut = false);
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text(profileProvider.error ?? "Logout failed")),
+      // );
     }
   }
 

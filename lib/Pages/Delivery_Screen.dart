@@ -1,6 +1,4 @@
-// --- REFUND SCREEN WIDGET ---
 import 'dart:ui';
-
 import 'package:dirgebeya/Model/Order.dart';
 import 'package:dirgebeya/Model/RefundStatus.dart';
 import 'package:dirgebeya/Pages/DeliveryDetailPage.dart';
@@ -8,8 +6,8 @@ import 'package:dirgebeya/Provider/dispatch_provider.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:intl/intl.dart';
 
+// --- Refund Screen ---
 class RefundScreen extends StatefulWidget {
   const RefundScreen({super.key});
 
@@ -18,17 +16,14 @@ class RefundScreen extends StatefulWidget {
 }
 
 class _RefundScreenState extends State<RefundScreen> {
-  // The currently selected filter status
-  RefundStatus _selectedStatus = RefundStatus.Pending;
+  RefundStatus _selectedStatus = RefundStatus.Assigned;
 
-  // Dummy data for all refund statuses to demonstrate filtering
   List<Dispatch> get _allDispatches {
     final provider = Provider.of<DispatchProvider>(context);
     if (provider.error != null || provider.isLoading) return [];
     return provider.dispatches;
   }
 
-  // Gets the filtered list based on the selected status
   List<Dispatch> get _filteredList {
     return _allDispatches.where((d) {
       return d.status.toLowerCase() == _selectedStatus.name.toLowerCase();
@@ -38,56 +33,96 @@ class _RefundScreenState extends State<RefundScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch dispatch data with initial date range
     Future.microtask(() {
       Provider.of<DispatchProvider>(
         context,
         listen: false,
-      ).fetchDispatches();
+      ).fetchDispatches(status: _selectedStatus.name.toLowerCase());
     });
   }
+
+  void _onStatusSelected(RefundStatus status) {
+    setState(() {
+      _selectedStatus = status;
+    });
+    Provider.of<DispatchProvider>(
+      context,
+      listen: false,
+    ).fetchDispatches(status: status.name.toLowerCase());
+  }
+
+  final List<RefundStatus> _chipOrder = [
+    RefundStatus.Assigned,
+    RefundStatus.Accepted,
+    RefundStatus.Picked,
+    RefundStatus.Delivered,
+    RefundStatus.Rejected,
+  ];
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // appBar: _buildAppBar(context),
         body: Column(
           children: [
             _buildAppBar(context),
             _buildFilterChips(),
+            // Expanded(
+            //   child: AnimatedSwitcher(
+            //     duration: const Duration(milliseconds: 400),
+            //     transitionBuilder: (child, animation) =>
+            //         FadeTransition(opacity: animation, child: child),
+            //     child: _filteredList.isEmpty
+            //         ? _buildEmptyState()
+            //         : ListView.builder(
+            //             key: ValueKey<RefundStatus>(_selectedStatus),
+            //             padding: const EdgeInsets.all(16.0),
+            //             itemCount: _filteredList.length,
+            //             itemBuilder: (context, index) {
+            //               final dispatch = _filteredList[index];
+            //               return Column(
+            //                 crossAxisAlignment: CrossAxisAlignment.start,
+            //                 children: [
+            //                   const SizedBox(height: 8),
+            //                   DispatchCard(dispatch: dispatch),
+            //                   const SizedBox(height: 16),
+            //                 ],
+            //               );
+            //             },
+            //           ),
+            //   ),
+            // ),
             Expanded(
-              // This widget handles the smooth transition between lists
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  // Fade transition for a smooth effect
-                  return FadeTransition(opacity: animation, child: child);
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await Provider.of<DispatchProvider>(
+                    context,
+                    listen: false,
+                  ).fetchDispatches(status: _selectedStatus.name.toLowerCase());
                 },
-                child: _filteredList.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        // IMPORTANT: The key tells AnimatedSwitcher that the child has changed
-                        key: ValueKey<RefundStatus>(_selectedStatus),
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: _filteredList.length,
-                        itemBuilder: (context, index) {
-                          final request = _filteredList[index];
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: 8.0,
-                                  left: 4.0,
-                                ),
-                              ),
-                              DispatchCard(dispatch: _filteredList[index]),
-                              const SizedBox(height: 16),
-                            ],
-                          );
-                        },
-                      ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: _filteredList.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          key: ValueKey<RefundStatus>(_selectedStatus),
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _filteredList.length,
+                          itemBuilder: (context, index) {
+                            final dispatch = _filteredList[index];
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 8),
+                                DispatchCard(dispatch: dispatch),
+                                const SizedBox(height: 16),
+                              ],
+                            );
+                          },
+                        ),
+                ),
               ),
             ),
           ],
@@ -102,16 +137,13 @@ class _RefundScreenState extends State<RefundScreen> {
       child: Row(
         children: [
           ClipPath(
-            // If you have a custom shape, keep this enabled:
-            // clipper: HexagonClipper(),
             child: Container(
               width: 40,
               height: 45,
-
               child: Padding(
-                padding: const EdgeInsets.all(6.0), // Adjust padding as needed
+                padding: const EdgeInsets.all(6.0),
                 child: Image.asset(
-                  'assets/image/logo.png', // ✅ Your logo path
+                  'assets/image/logo.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -140,18 +172,14 @@ class _RefundScreenState extends State<RefundScreen> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        children: RefundStatus.values.map((status) {
+        children: _chipOrder.map((status) {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
-              label: Text(status.name),
+              label: Text(status.label),
               selected: _selectedStatus == status,
-              onSelected: (bool selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedStatus = status;
-                  });
-                }
+              onSelected: (selected) {
+                if (selected) _onStatusSelected(status);
               },
               labelStyle: TextStyle(
                 color: _selectedStatus == status
@@ -174,148 +202,34 @@ class _RefundScreenState extends State<RefundScreen> {
 
   Widget _buildEmptyState() {
     return Center(
-      key: ValueKey<RefundStatus>(
-        _selectedStatus,
-      ), // Ensure switcher recognizes change
+      key: ValueKey<RefundStatus>(_selectedStatus),
       child: Text(
-        'No ${_selectedStatus.name.toLowerCase()} requests found.',
+        'No ${_selectedStatus.label.toLowerCase()} requests found.',
         style: const TextStyle(color: Colors.grey, fontSize: 16),
       ),
     );
   }
 }
 
-// --- REUSABLE REFUND CARD WIDGET ---
-class RefundCard extends StatelessWidget {
-  final RefundRequest request;
-  const RefundCard({super.key, required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      color: Colors.white,
-      shadowColor: Colors.grey.withOpacity(0.15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Order# ${request.orderId}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Image.network(request.imageUrl, fit: BoxFit.contain),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.productName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '\$${request.price.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          request.status.name,
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: RichText(
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                text: TextSpan(
-                  style: const TextStyle(color: Colors.black54, fontSize: 14),
-                  children: [
-                    TextSpan(
-                      text: 'Reason: ',
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextSpan(text: request.reason),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+// --- Status Extension ---
+extension RefundStatusLabel on RefundStatus {
+  String get label {
+    switch (this) {
+      case RefundStatus.Assigned:
+        return "Assigned";
+      case RefundStatus.Accepted:
+        return "Accepted";
+      case RefundStatus.Picked:
+        return "Picked Up";
+      case RefundStatus.Delivered:
+        return "Delivered";
+      case RefundStatus.Rejected:
+        return "Rejected";
+    }
   }
 }
 
-// --- HEXAGON CLIPPER FOR THE LOGO ---
-class HexagonClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.moveTo(size.width * 0.5, 0);
-    path.lineTo(size.width, size.height * 0.25);
-    path.lineTo(size.width, size.height * 0.75);
-    path.lineTo(size.width * 0.5, size.height);
-    path.lineTo(0, size.height * 0.75);
-    path.lineTo(0, size.height * 0.25);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
+// --- Dispatch Card (Unchanged except for status mapping updates) ---
 class DispatchCard extends StatelessWidget {
   final Dispatch dispatch;
   const DispatchCard({super.key, required this.dispatch});
@@ -323,14 +237,19 @@ class DispatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusDetails = _getStatusDetails(dispatch.status ?? '');
-    final paymentDetails = _getPaymentDetails(dispatch.pickupTime ?? '');
+    final paymentDetails = _getPaymentDetails(
+      dispatch.pickupTime?.toString() ?? '',
+    );
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DispatchDetailPage(orderId: dispatch.id),
+            builder: (_) => DispatchDetailPage(
+              orderId: dispatch.id,
+              Status: dispatch.status,
+            ),
           ),
         );
       },
@@ -361,7 +280,7 @@ class DispatchCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                dispatch.assignedTime ?? '',
+                dispatch.assignedTime?.toString() ?? '',
                 style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 12),
@@ -424,15 +343,15 @@ class DispatchCard extends StatelessWidget {
 
   Map<String, dynamic> _getStatusDetails(String status) {
     switch (status.toUpperCase()) {
+      case "ASSIGNED":
+        return {'icon': Icons.assignment_turned_in, 'color': Colors.blueAccent};
       case "DELIVERED":
         return {'icon': Icons.check_circle, 'color': Colors.green};
-      case "PENDING":
-        return {'icon': Icons.pending_actions, 'color': Colors.orange};
-      case "PACKAGING":
-        return {'icon': Icons.all_inbox, 'color': Colors.teal};
+      case "PICKEDUP":
+        return {'icon': Icons.local_shipping, 'color': Colors.indigo};
       case "ACCEPTED":
-        return {'icon': Icons.local_shipping, 'color': Colors.blue};
-      case "CANCELLED":
+        return {'icon': Icons.thumb_up, 'color': Colors.blue};
+      case "REJECTED":
         return {'icon': Icons.cancel, 'color': Colors.red};
       default:
         return {'icon': Icons.help_outline, 'color': Colors.grey};

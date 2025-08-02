@@ -4,16 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../config/api_config.dart';
 import '../utils/token_storage.dart';
-
 class Dispatch {
   final int id;
   final int orderId;
   final int customerId;
   final int driverId;
-  final String assignedTime;
-  final String acceptedTime;
-  final String pickupTime;
-  final String deliveredTime;
+  final DateTime? assignedTime;
+  final DateTime? acceptedTime;
+  final DateTime? pickupTime;
+  final DateTime? deliveredTime;
   final String status;
   final String remarks;
 
@@ -22,31 +21,53 @@ class Dispatch {
     required this.orderId,
     required this.customerId,
     required this.driverId,
-    required this.assignedTime,
-    required this.acceptedTime,
-    required this.pickupTime,
-    required this.deliveredTime,
+    this.assignedTime,
+    this.acceptedTime,
+    this.pickupTime,
+    this.deliveredTime,
     required this.status,
     required this.remarks,
   });
 
   factory Dispatch.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDate(dynamic date) {
+      if (date == null) return null;
+      try {
+        return DateTime.parse(date.toString());
+      } catch (_) {
+        return null;
+      }
+    }
+
     return Dispatch(
       id: json['id'],
       orderId: json['order_id'],
       customerId: json['customer_id'],
       driverId: json['driver_id'],
-      assignedTime: json['assigned_time'],
-      acceptedTime: json['accepted_time'],
-      pickupTime: json['pickup_time'],
-      deliveredTime: json['delivered_time'],
-      status: json['status'],
-      remarks: json['remarks'],
+      assignedTime: parseDate(json['assigned_time']),
+      acceptedTime: parseDate(json['accepted_time']),
+      pickupTime: parseDate(json['pickup_time']),
+      deliveredTime: parseDate(json['delivered_time']),
+      status: json['status'] ?? '',
+      remarks: json['remarks'] ?? '',
     );
   }
 
-  get driverPhone => null;
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'order_id': orderId,
+        'customer_id': customerId,
+        'driver_id': driverId,
+        'assigned_time': assignedTime?.toIso8601String(),
+        'accepted_time': acceptedTime?.toIso8601String(),
+        'pickup_time': pickupTime?.toIso8601String(),
+        'delivered_time': deliveredTime?.toIso8601String(),
+        'status': status,
+        'remarks': remarks,
+      };
 }
+
+
 
 class DispatchProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -56,89 +77,65 @@ class DispatchProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Dispatch> get dispatches => _dispatches;
-Future<void> fetchDispatches({
-  String status = 'assigned',
-}) async {
-  _isLoading = true;
-  _error = null;
-  notifyListeners();
-
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    _error = 'Missing token';
-    _isLoading = false;
+  
+  Future<void> fetchDispatches({required String status}) async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
-    return;
-  }
 
-  // Format dates as yyyy-MM-dd
-  final DateFormat formatter = DateFormat('yyyy-MM-dd');
-  final DateTime now = DateTime.now();
-  final String dateTo = formatter.format(now);
-  final String dateFrom = formatter.format(now.subtract(Duration(days: 100)));
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      _error = 'Missing token';
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
-  final url = Uri.parse(
-    '${ApiConfig.baseUrl}/dispatcher?action=list&status=$status&date_from=$dateFrom&date_to=$dateTo',
-  );
+    // Format dates as yyyy-MM-dd
+    final DateFormat formatter = DateFormat('yyyy-MM-dd');
+    final DateTime now = DateTime.now();
+    final String dateTo = formatter.format(now);
+    final String dateFrom = formatter.format(now.subtract(Duration(days: 3)));
 
-
-  try {
-    final response = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $token'},
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}/dispatcher?action=list&status=$status&date_from=$dateFrom&date_to=$dateTo',
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print("disp: $data");
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-      if (data is List && data.isNotEmpty) {
-        _dispatches = data.map((e) => Dispatch.fromJson(e)).toList();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("disp url" + url.toString());
+        print("disp: $data");
+
+        if (data is List && data.isNotEmpty) {
+          _dispatches = data.map((e) => Dispatch.fromJson(e)).toList();
+        } else {
+          
+        }
       } else {
-        _dispatches = _getMockDispatches();
+        print("hello world");
+        _error = "Failed to fetch dispatch list (${response.statusCode})";
+        
       }
-    } else {
-      _error = "Failed to fetch dispatch list (${response.statusCode})";
-      _dispatches = _getMockDispatches();
+    } catch (e) {
+      _error = "Error: $e";
+      
     }
-  } catch (e) {
-    _error = "Error: $e";
-    _dispatches = _getMockDispatches();
+
+    _isLoading = false;
+    notifyListeners();
   }
 
-  _isLoading = false;
-  notifyListeners();
-}
-
-  List<Dispatch> _getMockDispatches() {
-    return [
-      Dispatch(
-        id: 1,
-        orderId: 101,
-        customerId: 201,
-        driverId: 2040,
-        assignedTime: '2025-06-03 10:00:00',
-        acceptedTime: '2025-06-03 11:00:00',
-        pickupTime: '2025-06-03 12:00:00',
-        deliveredTime: '2025-06-03 13:00:00',
-        status: 'assigned',
-        remarks: 'Urgent delivery',
-      ),
-      Dispatch(
-        id: 2,
-        orderId: 102,
-        customerId: 202,
-        driverId: 2041,
-        assignedTime: '2025-06-04 09:00:00',
-        acceptedTime: '',
-        pickupTime: '',
-        deliveredTime: '',
-        status: 'pending',
-        remarks: 'Normal',
-      ),
-    ];
-  }
-  Future<bool> acceptDispatch({required int orderId, required String acceptedTime}) async {
+ 
+  Future<bool> acceptDispatch({
+    required int orderId,
+    required String acceptedTime,
+  }) async {
     final token = await TokenStorage.getToken();
     if (token == null) return false;
 
@@ -150,9 +147,11 @@ Future<void> fetchDispatches({
     };
 
     try {
-      final res = await http.post(url, headers: {
-        'Authorization': 'Bearer $token',
-      }, body: body);
+      final res = await http.post(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+        body: body,
+      );
 
       return res.statusCode == 200;
     } catch (e) {
@@ -170,7 +169,9 @@ Future<void> fetchDispatches({
     final token = await TokenStorage.getToken();
     if (token == null) return false;
 
-    final url = Uri.parse('${ApiConfig.baseUrl}/dispatcher?action=update-status');
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}/dispatcher?action=update-status',
+    );
 
     final body = {
       'order_id': orderId.toString(),
@@ -180,9 +181,11 @@ Future<void> fetchDispatches({
     };
 
     try {
-      final res = await http.post(url, headers: {
-        'Authorization': 'Bearer $token',
-      }, body: body);
+      final res = await http.post(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+        body: body,
+      );
 
       return res.statusCode == 200;
     } catch (e) {
@@ -190,7 +193,4 @@ Future<void> fetchDispatches({
       return false;
     }
   }
-
-
-
 }

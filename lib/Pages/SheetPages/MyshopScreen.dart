@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dirgebeya/Pages/Widgets/UpdateMyShopBottom.dart';
 import 'package:dirgebeya/Provider/myshop_provider.dart';
+import 'package:dirgebeya/Widgets/_providerErroeMessage.dart';
 import 'package:dirgebeya/config/color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -115,12 +116,8 @@ class _MyShopScreenState extends State<MyShopScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (provider.error != null) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              provider.error!,
-              style: const TextStyle(color: Colors.red),
-            ),
+          return ProviderErrorWidget(
+            message:"please turn on internet connections "
           );
         }
         final shop = provider.shop;
